@@ -8,6 +8,7 @@ API_KEY = 'vUB2Zptz3Xnu77rAyEkqU2AURgG1G9h29Kx22uxShCIZBepRznjBq3yfd1kYYAoG'
 API_SECRET_KEY = 'aeDTMXgEZYVm52EbQ9CFl6yk5pSawd6WSxCU2dPirBAqQyEPQXrr9G8YDTcQxtBO'
 
 print("~~~~ Welcome to the Main script of the shekFUND ~~~~")
+print("... I just pushed this code to my git repo: https://github.com/SHEKlabs/SHEKfund ...")
 
 client = Client(API_KEY, API_SECRET_KEY, testnet=True) #Testnet makes sure this is fake $, not real acct
 client.get_account()
