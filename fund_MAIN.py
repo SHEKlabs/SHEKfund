@@ -16,8 +16,8 @@ client.get_account()
 # Simple trading algo. Buy if below threshold, sell if above threshold
 # SET THRESHOLDS !!! 
 symbol = 'BTCUSDT'
-buy_price_threshold = 86890
-sell_price_threshold = 86990
+buy_price_threshold = 85985
+sell_price_threshold = 85990
 # Amount you want to buy / sell
 trade_quantity = 0.001
 
