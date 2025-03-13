@@ -1,77 +1,116 @@
 #Youtube tutorial Link: https://www.youtube.com/watch?v=K15KVuNvk9s 
 
-from binance.client import Client 
 import time
+import os
+import sys
+import logging
+import threading
 from datetime import datetime
+from binance.client import Client 
+from flask import Flask, jsonify, render_template
 
-API_KEY = 'vUB2Zptz3Xnu77rAyEkqU2AURgG1G9h29Kx22uxShCIZBepRznjBq3yfd1kYYAoG'
-API_SECRET_KEY = 'aeDTMXgEZYVm52EbQ9CFl6yk5pSawd6WSxCU2dPirBAqQyEPQXrr9G8YDTcQxtBO'
+# Import our configuration files
+import config
+from coin_configs import AVAILABLE_COINS, COIN_CONFIGS
+from data_fetcher import DataFetcher
+from chart_manager import ChartManager
+from trading_bot import TradingBot
+from web_server import WebServer
 
-print("~~~~ Welcome to the Main script of the shekFUND ~~~~")
-print("... I just pushed this code to my git repo: https://github.com/SHEKlabs/SHEKfund ...")
+def print_welcome():
+    """Print welcome message"""
+    print("~~~~ Welcome to the Main script of the shekFUND ~~~~")
+    print("... I just pushed this code to my git repo: https://github.com/SHEKlabs/SHEKfund ...")
 
-client = Client(API_KEY, API_SECRET_KEY, testnet=True) #Testnet makes sure this is fake $, not real acct
-client.get_account()
+def display_available_coins():
+    """Display available coins for selection"""
+    print("\nAvailable coins:")
+    for i, coin in enumerate(AVAILABLE_COINS, 1):
+        print(f"{i}. {coin}")
 
-# Simple trading algo. Buy if below threshold, sell if above threshold
-# SET THRESHOLDS !!! 
-symbol = 'BTCUSDT'
-buy_price_threshold = 85985
-sell_price_threshold = 85990
-# Amount you want to buy / sell
-trade_quantity = 0.001
-
-# Function to pull the current BTC price: 
-def get_current_price(symbol):
-    ticker = client.get_symbol_ticker(symbol=symbol)
-    return float(ticker['price'])
-# Get the current price: 
-print(get_current_price(symbol))
-
-# ~~~ Organizing Orders ~~~ :
-# Buy order:
-def place_buy_order(symbol, quantity):
-    order = client.order_market_buy(symbol=symbol, quantity=quantity)
-    print(f"Buy Order Done: {order}")
-# test placing a buy order: 
-place_buy_order(symbol, trade_quantity)
-
-# SELL order:
-def place_sell_order(symbol, quantity):
-    order = client.order_market_sell(symbol=symbol, quantity=quantity)
-    print(f"Buy Order Done: {order}")
-# test placing a sell order: 
-place_sell_order(symbol, trade_quantity)
-
-# ~~~~ TRADING BOT ~~~~
-def trading_bot():
-    in_position = False 
-
-    #setup an endless look that keeps running and checking for the thresholds: 
-    while True:
-        now = datetime.now()
-        formatted_date_time = now.strftime("< %d-%m-%Y | %H:%M:%S >")
-
-        current_price = get_current_price(symbol)
-        print(f"{formatted_date_time} Current price of {symbol}: ${current_price}")
-
-        if not in_position:
-            if current_price < buy_price_threshold:
-                print(f"Price is BELOW {buy_price_threshold}. Placing BUY order.")
-                place_buy_order(symbol, trade_quantity) #executes the buy order
-                in_position = True  #Now the buy position is True
+def get_user_selection():
+    """Get user selection of coin to trade"""
+    selection = input("--> Enter the number of the coin you want to trade with: ")
+    
+    try:
+        index = int(selection) - 1
+        if 0 <= index < len(AVAILABLE_COINS):
+            selected_coin = AVAILABLE_COINS[index]
+            coin_config = COIN_CONFIGS[selected_coin]
+            return selected_coin, coin_config
         else:
-            if current_price > sell_price_threshold:
-                print(f"Price is ABOVE {sell_price_threshold}. Placing SELL order.")
-                place_sell_order(symbol, trade_quantity) #executes the sell order
-                in_position = False  #Now the buy position is False
-        
-        #make the loop wait so it doesn't keep on running.
-        time.sleep(1.5) #seconds
+            print("Invalid selection. Please run the script again and select a valid option.")
+            return None, None
+    except ValueError:
+        print("Please enter a valid number. Run the script again to try again.")
+        return None, None
 
-
+def main():
+    """Main entry point of the application"""
+    print_welcome()
+    
+    # Initialize components with quiet initialization
+    data_fetcher = DataFetcher(quiet_init=True)
+    chart_manager = ChartManager()
+    trading_bot = TradingBot(data_fetcher, chart_manager)
+    
+    # Configure web server
+    web_server = WebServer(chart_manager, data_fetcher)
+    
+    # Start web server first
+    print("Starting web server...")
+    web_server.start()
+    
+    # Tell user how to access the web interface with clear instruction
+    print("\n************************************************************")
+    print("✅ Web server started successfully!")
+    print(f"✅ Please open the web interface in your browser at:")
+    print(f"   http://localhost:{config.PORT}")
+    print("************************************************************\n")
+    
+    # Now get coin selection from user
+    display_available_coins()
+    selected_coin, coin_config = get_user_selection()
+    if selected_coin is None or coin_config is None:
+        return
+    
+    print(f"\nSelected {selected_coin} for trading.")
+    print(f"Configuration: Buy Threshold: ${coin_config['buy_threshold']}, "
+          f"Sell Threshold: ${coin_config['sell_threshold']}, "
+          f"Quantity: {coin_config['quantity']}")
+    
+    # Update chart_manager with selected coin and thresholds
+    chart_manager.set_symbol_and_thresholds(
+        selected_coin, 
+        coin_config['buy_threshold'], 
+        coin_config['sell_threshold']
+    )
+    
+    # Wait for user confirmation
+    start = input("--> Press Enter to start trading, or type 'quit' to exit: ")
+    if start.lower() == 'quit':
+        print("Exiting application.")
+        return
+    
+    # Verify connectivity before starting
+    print("Verifying connection to Binance API...")
+    if not data_fetcher.verify_connection():
+        print("Failed to connect to Binance API. Please check your internet connection and API keys.")
+        return
+    
+    print("\n************************************************************")
+    print("✅ Trading bot has started!")
+    print("✅ The chart should now be updating in your browser.")
+    print("✅ Press Ctrl+C to stop the trading bot.")
+    print("************************************************************\n")
+    
+    # Start trading bot
+    trading_bot.start_trading(
+        selected_coin, 
+        coin_config['buy_threshold'], 
+        coin_config['sell_threshold'], 
+        coin_config['quantity']
+    )
 
 if __name__ == "__main__":
-    trading_bot()
-    
-    #print(formatted_date_time)
+    main()

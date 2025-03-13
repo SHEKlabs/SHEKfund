@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SHEKfund Trading Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.0.2/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0/dist/chartjs-adapter-moment.min.js"></script>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        canvas {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+        }
+        h1 {
+            text-align: center;
+            color: #3399ff;
+        }
+        .chart-container {
+            position: relative;
+            height: 70vh;
+            width: 95%;
+            margin: 0 auto;
+        }
+        .status-panel {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 5px;
+        }
+        .value {
+            font-weight: bold;
+            color: #3399ff;
+        }
+        .price-up {
+            color: #00cc00;
+        }
+        .price-down {
+            color: #ff3333;
+        }
+        .last-fetch {
+            font-size: 0.8em;
+            color: #888;
+            margin-top: 10px;
+        }
+        .waiting-message {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 18px;
+            color: #3399ff;
+        }
+        .blinking {
+            animation: blink 1.5s infinite;
+        }
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>SHEKfund Trading Dashboard</h1>
+    
+    <!-- Waiting message shown before coin selection -->
+    <div id="waiting-container" class="waiting-message">
+        <h2>Welcome to SHEKfund Trading Bot</h2>
+        <p>Please return to the terminal to select a coin to trade.</p>
+        <p>After selecting a coin in the terminal, the trading dashboard will appear here automatically.</p>
+        <p class="blinking">Waiting for coin selection in terminal...</p>
+    </div>
+    
+    <!-- Chart and status panel (hidden initially) -->
+    <div id="trading-content" class="hidden">
+        <div class="chart-container">
+            <canvas id="priceChart"></canvas>
+        </div>
+        <div class="status-panel">
+            <h3>Trading Status</h3>
+            <p>Selected Coin: <span id="selected-coin" class="value">Loading...</span></p>
+            <p>Current Price: <span id="current-price" class="value">Loading...</span></p>
+            <p>Buy Threshold: <span id="buy-threshold" class="value">Loading...</span></p>
+            <p>Sell Threshold: <span id="sell-threshold" class="value">Loading...</span></p>
+            <p class="last-fetch">Last Updated: <span id="last-updated">Loading...</span></p>
+        </div>
+    </div>
+    
+    <script>
+        // Register the annotation plugin
+        const annotationPlugin = window['chartjs-plugin-annotation'];
+        Chart.register(annotationPlugin);
+        
+        // Check if trading has started
+        function checkTradingStarted() {
+            fetch('/data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.symbol && data.symbol !== "") {
+                        // Hide waiting message and show trading content
+                        document.getElementById('waiting-container').classList.add('hidden');
+                        document.getElementById('trading-content').classList.remove('hidden');
+                        
+                        // Initialize and start the chart if not already done
+                        if (!window.chartInitialized) {
+                            initializeChart();
+                            window.chartInitialized = true;
+                        }
+                    } else {
+                        // Check again in 2 seconds
+                        setTimeout(checkTradingStarted, 2000);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking trading status:', error);
+                    // Retry after delay
+                    setTimeout(checkTradingStarted, 5000);
+                });
+        }
+        
+        // Start checking if trading has begun
+        checkTradingStarted();
+
+        // Initialize the chart
+        function initializeChart() {
+            // Get canvas context
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            
+            // Initialize the chart
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Price',
+                        data: [],
+                        borderColor: '#3399ff',
+                        pointRadius: 0,
+                        borderWidth: 2,
+                        fill: false
+                    }, {
+                        label: 'Buy Trades',
+                        data: [],
+                        type: 'scatter',
+                        pointBackgroundColor: '#00cc00',
+                        pointRadius: 6,
+                        showLine: false
+                    }, {
+                        label: 'Sell Trades',
+                        data: [],
+                        type: 'scatter',
+                        pointBackgroundColor: '#ff3333',
+                        pointRadius: 6,
+                        showLine: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 0 // Disable animation for smoother real-time updates
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'second',
+                                displayFormats: {
+                                    second: 'HH:mm:ss'
+                                }
+                            },
+                            grid: { 
+                                color: 'rgba(255, 255, 255, 0.1)' 
+                            },
+                            ticks: {
+                                color: '#ffffff'
+                            }
+                        },
+                        y: {
+                            beginAtZero: false,
+                            grid: { 
+                                color: 'rgba(255, 255, 255, 0.1)' 
+                            },
+                            ticks: {
+                                color: '#ffffff'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { 
+                            labels: { 
+                                color: '#ffffff',
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        },
+                        annotation: {
+                            annotations: {
+                                buyThreshold: {
+                                    type: 'line',
+                                    yMin: 0,
+                                    yMax: 0,
+                                    borderColor: '#00cc00',
+                                    borderWidth: 2,
+                                    label: { 
+                                        enabled: true, 
+                                        content: 'Buy Threshold', 
+                                        backgroundColor: '#00cc00', 
+                                        color: '#fff',
+                                        position: 'start'
+                                    }
+                                },
+                                sellThreshold: {
+                                    type: 'line',
+                                    yMin: 0,
+                                    yMax: 0,
+                                    borderColor: '#ff3333',
+                                    borderWidth: 2,
+                                    label: { 
+                                        enabled: true, 
+                                        content: 'Sell Threshold', 
+                                        backgroundColor: '#ff3333', 
+                                        color: '#fff',
+                                        position: 'end' 
+                                    }
+                                }
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            bodyColor: '#ffffff',
+                            titleColor: '#3399ff'
+                        }
+                    },
+                    elements: { 
+                        line: { 
+                            tension: 0.1 
+                        },
+                        point: {
+                            radius: 0 // Hide points on main line for cleaner look
+                        }
+                    }
+                }
+            });
+            
+            // Store chart reference globally
+            window.priceChart = chart;
+
+            // Store previous price for comparison (for color change)
+            let previousPrice = null;
+
+            // Function to update the chart with new data from /data endpoint
+            function updateChartData() {
+                fetch('/data')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Update price chart
+                        if (data.price_history && data.price_history.length > 0) {
+                            chart.data.datasets[0].data = data.price_history.map(d => ({ 
+                                x: new Date(d[0]), 
+                                y: d[1] 
+                            }));
+                            
+                            // Update buy trades
+                            chart.data.datasets[1].data = data.buy_trades.map(d => ({ 
+                                x: new Date(d[0]), 
+                                y: d[1] 
+                            }));
+                            
+                            // Update sell trades
+                            chart.data.datasets[2].data = data.sell_trades.map(d => ({ 
+                                x: new Date(d[0]), 
+                                y: d[1] 
+                            }));
+                            
+                            // Update thresholds
+                            if (data.thresholds) {
+                                chart.options.plugins.annotation.annotations.buyThreshold.yMin = data.thresholds.buy;
+                                chart.options.plugins.annotation.annotations.buyThreshold.yMax = data.thresholds.buy;
+                                chart.options.plugins.annotation.annotations.sellThreshold.yMin = data.thresholds.sell;
+                                chart.options.plugins.annotation.annotations.sellThreshold.yMax = data.thresholds.sell;
+                                
+                                // Update threshold values in status panel
+                                document.getElementById('buy-threshold').textContent = `$${data.thresholds.buy.toFixed(2)}`;
+                                document.getElementById('sell-threshold').textContent = `$${data.thresholds.sell.toFixed(2)}`;
+                            }
+                            
+                            // Update symbol in status panel
+                            if (data.symbol) {
+                                document.getElementById('selected-coin').textContent = data.symbol;
+                            }
+                            
+                            // Update the chart
+                            chart.update();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching chart data:', error);
+                    });
+            }
+
+            // Function to update the real-time price display from /update endpoint
+            function updateRealTimeData() {
+                fetch('/update')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.price) {
+                            const priceElement = document.getElementById('current-price');
+                            
+                            // Format the price
+                            const formattedPrice = `$${data.price.toFixed(2)}`;
+                            
+                            // Change color based on price movement
+                            if (previousPrice !== null) {
+                                if (data.price > previousPrice) {
+                                    priceElement.className = 'value price-up';
+                                } else if (data.price < previousPrice) {
+                                    priceElement.className = 'value price-down';
+                                } else {
+                                    priceElement.className = 'value';
+                                }
+                            }
+                            
+                            // Update the price display
+                            priceElement.textContent = formattedPrice;
+                            
+                            // Update previous price
+                            previousPrice = data.price;
+                        }
+                        
+                        // Update last updated timestamp
+                        if (data.last_updated) {
+                            document.getElementById('last-updated').textContent = data.last_updated;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching real-time data:', error);
+                    });
+            }
+
+            // Set intervals for different update frequencies
+            setInterval(updateChartData, 1000);  // Chart update every 1 second
+            setInterval(updateRealTimeData, 5000);  // Price update every 5 seconds
+            
+            // Initial updates
+            updateChartData();
+            updateRealTimeData();
+        }
+    </script>
+</body>
+</html> 
