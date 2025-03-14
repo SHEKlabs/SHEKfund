@@ -79,7 +79,8 @@ class TradingBot:
                         if order:
                             self.in_position = True
                             self.last_action = f"Bought at ${current_price:.2f}"
-                            self.chart_manager.add_buy_trade(current_price)
+                            # Record detailed buy trade with threshold triggered flag
+                            self.chart_manager.add_buy_trade(current_price, quantity, threshold_triggered=True)
                 else:
                     if current_price > sell_threshold:
                         print(f"Price is ABOVE {sell_threshold}. Placing SELL order.")
@@ -87,7 +88,8 @@ class TradingBot:
                         if order:
                             self.in_position = False
                             self.last_action = f"Sold at ${current_price:.2f}"
-                            self.chart_manager.add_sell_trade(current_price)
+                            # Record detailed sell trade with threshold triggered flag
+                            self.chart_manager.add_sell_trade(current_price, quantity, threshold_triggered=True)
                 
                 # Update display
                 self.update_display(symbol, current_price, buy_threshold, sell_threshold)

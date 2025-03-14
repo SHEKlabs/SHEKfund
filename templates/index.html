@@ -67,6 +67,92 @@
         .hidden {
             display: none;
         }
+        
+        /* Trade Table Styles */
+        .trade-table-container {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 5px;
+        }
+        
+        #trade-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        #trade-table th, #trade-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #444;
+        }
+        
+        #trade-table th {
+            background-color: #333;
+            color: #3399ff;
+        }
+        
+        #trade-table tr:nth-child(even) {
+            background-color: #252525;
+        }
+        
+        .trade-buy {
+            color: #00cc00;
+        }
+        
+        .trade-sell {
+            color: #ff3333;
+        }
+        
+        /* P&L Styles */
+        .pnl-panel {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 5px;
+        }
+        
+        .pnl-metrics {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+        
+        .pnl-metric {
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            min-width: 40%;
+        }
+        
+        .metric-label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #999;
+        }
+        
+        .metric-value {
+            display: block;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .profit-positive {
+            color: #00cc00;
+        }
+        
+        .profit-negative {
+            color: #ff3333;
+        }
+        
+        .profit-zero {
+            color: #3399ff;
+        }
     </style>
 </head>
 <body>
@@ -92,6 +178,49 @@
             <p>Buy Threshold: <span id="buy-threshold" class="value">Loading...</span></p>
             <p>Sell Threshold: <span id="sell-threshold" class="value">Loading...</span></p>
             <p class="last-fetch">Last Updated: <span id="last-updated">Loading...</span></p>
+        </div>
+        
+        <!-- P&L Summary Panel -->
+        <div class="pnl-panel">
+            <h3>P&L Summary</h3>
+            <div class="pnl-metrics">
+                <div class="pnl-metric">
+                    <span class="metric-label">Net Invested:</span>
+                    <span id="net-invested" class="metric-value">$0.00</span>
+                </div>
+                <div class="pnl-metric">
+                    <span class="metric-label">Cumulative Profit:</span>
+                    <span id="cumulative-profit" class="metric-value">$0.00</span>
+                </div>
+                <div class="pnl-metric">
+                    <span class="metric-label">Profit Percentage:</span>
+                    <span id="profit-percentage" class="metric-value">0.00%</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Trade Execution Table -->
+        <div class="trade-table-container">
+            <h3>Executed Trades</h3>
+            <table id="trade-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Type</th>
+                        <th>Coin</th>
+                        <th>Price ($)</th>
+                        <th>Amount</th>
+                        <th>Value ($)</th>
+                        <th>Cumulative Profit ($)</th>
+                        <th>Cumulative Profit (%)</th>
+                        <th>Net Invested ($)</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody id="trade-log-body">
+                    <tr><td colspan="10">No trades executed yet</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
     
@@ -359,13 +488,139 @@
                     });
             }
 
+            // Function to update the trade table with latest trade data
+            function updateTradeTable() {
+                const tradeLogBody = document.getElementById('trade-log-body');
+                
+                fetch('/data')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.trade_log && data.trade_log.length > 0) {
+                            // Clear existing rows
+                            tradeLogBody.innerHTML = '';
+                            
+                            // Sort trades by time (most recent first)
+                            const sortedTrades = [...data.trade_log].sort((a, b) => b.time - a.time);
+                            
+                            // Add each trade to the table
+                            sortedTrades.forEach(trade => {
+                                const row = document.createElement('tr');
+                                
+                                // Format time
+                                const tradeTime = new Date(trade.time);
+                                const formattedTime = tradeTime.toLocaleTimeString();
+                                
+                                // Format other values
+                                const formattedPrice = trade.price.toFixed(2);
+                                const formattedAmount = trade.amount.toFixed(8);
+                                const formattedValue = trade.dollar_amount.toFixed(2);
+                                
+                                // Format profit and determine profit class
+                                let formattedProfit = trade.profit;
+                                let profitClass = '';
+                                if (trade.profit !== "N/A") {
+                                    formattedProfit = trade.profit.toFixed(2);
+                                    profitClass = trade.profit > 0 ? 'profit-positive' : 
+                                                  trade.profit < 0 ? 'profit-negative' : 'profit-zero';
+                                }
+                                
+                                // Format net invested
+                                const formattedNetInvested = trade.net_invested.toFixed(2);
+                                
+                                // Calculate profit percentage
+                                let profitPercentage = 'N/A';
+                                let profitPercentClass = '';
+                                if (trade.profit !== "N/A" && trade.net_invested > 0) {
+                                    profitPercentage = ((trade.profit / trade.net_invested) * 100).toFixed(2) + '%';
+                                    profitPercentClass = trade.profit > 0 ? 'profit-positive' : 
+                                                        trade.profit < 0 ? 'profit-negative' : 'profit-zero';
+                                } else if (trade.profit !== "N/A" && trade.net_invested === 0) {
+                                    // Handle case where we've sold everything and net_invested is 0
+                                    profitPercentage = trade.profit > 0 ? "∞%" : "0%";
+                                    profitPercentClass = trade.profit > 0 ? 'profit-positive' : 'profit-zero';
+                                }
+                                
+                                // Set row class based on trade type
+                                const typeClass = trade.type === 'buy' ? 'trade-buy' : 'trade-sell';
+                                
+                                // Get coin symbol directly from the trade entry
+                                const coinSymbol = trade.coin || '';
+                                
+                                row.innerHTML = `
+                                    <td>${formattedTime}</td>
+                                    <td class="${typeClass}">${trade.type.toUpperCase()}</td>
+                                    <td>${coinSymbol}</td>
+                                    <td>${formattedPrice}</td>
+                                    <td>${formattedAmount}</td>
+                                    <td>${formattedValue}</td>
+                                    <td class="${profitClass}">${formattedProfit}</td>
+                                    <td class="${profitPercentClass}">${profitPercentage}</td>
+                                    <td>${formattedNetInvested}</td>
+                                    <td>${trade.description}</td>
+                                `;
+                                
+                                tradeLogBody.appendChild(row);
+                            });
+                            
+                            // Update the P&L summary
+                            if (data.cumulative_profit !== undefined) {
+                                const cumProfitElem = document.getElementById('cumulative-profit');
+                                const netInvestedElem = document.getElementById('net-invested');
+                                const profitPercentageElem = document.getElementById('profit-percentage');
+                                
+                                // Format the values
+                                const formattedProfit = `$${data.cumulative_profit.toFixed(2)}`;
+                                const formattedNetInvested = `$${data.net_invested.toFixed(2)}`;
+                                
+                                // Calculate profit percentage
+                                let profitPercentage = '0.00%';
+                                if (data.net_invested > 0) {
+                                    profitPercentage = `${((data.cumulative_profit / data.net_invested) * 100).toFixed(2)}%`;
+                                } else if (data.net_invested === 0 && data.cumulative_profit > 0) {
+                                    profitPercentage = '∞%'; // If we've sold everything and have profit
+                                }
+                                
+                                // Update the elements with formatted values
+                                cumProfitElem.textContent = formattedProfit;
+                                netInvestedElem.textContent = formattedNetInvested;
+                                profitPercentageElem.textContent = profitPercentage;
+                                
+                                // Add appropriate class based on profit value
+                                if (data.cumulative_profit > 0) {
+                                    cumProfitElem.className = 'metric-value profit-positive';
+                                    profitPercentageElem.className = 'metric-value profit-positive';
+                                } else if (data.cumulative_profit < 0) {
+                                    cumProfitElem.className = 'metric-value profit-negative';
+                                    profitPercentageElem.className = 'metric-value profit-negative';
+                                } else {
+                                    cumProfitElem.className = 'metric-value profit-zero';
+                                    profitPercentageElem.className = 'metric-value profit-zero';
+                                }
+                            }
+                        } else {
+                            // No trades yet
+                            tradeLogBody.innerHTML = '<tr><td colspan="10">No trades executed yet</td></tr>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching trade data:', error);
+                    });
+            }
+
             // Set intervals for different update frequencies
             setInterval(updateChartData, 1000);  // Chart update every 1 second
             setInterval(updateRealTimeData, 5000);  // Price update every 5 seconds
+            setInterval(updateTradeTable, 2000);  // Trade table update every 2 seconds
             
             // Initial updates
             updateChartData();
             updateRealTimeData();
+            updateTradeTable();
         }
     </script>
 </body>

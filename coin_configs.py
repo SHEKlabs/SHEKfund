@@ -7,8 +7,8 @@ AVAILABLE_COINS = ['BTCUSDT', 'ETHUSDT', 'LTCUSDT']
 # Configuration for each coin with buy/sell thresholds and quantities
 COIN_CONFIGS = {
     'BTCUSDT': {
-        'buy_threshold': 85985, 
-        'sell_threshold': 85990, 
+        'buy_threshold': 81150, 
+        'sell_threshold': 81200, 
         'quantity': 0.001
     },
     'ETHUSDT': {
