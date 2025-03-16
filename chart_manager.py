@@ -12,6 +12,7 @@ class ChartManager:
         self.sell_trades = []    # List of [timestamp, price] for sells
         self.trade_log = []      # Detailed trade log for the table display
         self.thresholds = {}     # Dictionary with 'buy' and 'sell' thresholds
+        self.threshold_history = []  # List of threshold change records with timestamps
         self.current_symbol = "" # Currently selected symbol for trading
         self.lock = threading.Lock()  # For thread-safe data access
         
@@ -26,6 +27,81 @@ class ChartManager:
             self.current_symbol = symbol
             self.thresholds = {'buy': buy_threshold, 'sell': sell_threshold}
             
+            # Record initial thresholds in history
+            timestamp = int(time.time() * 1000)  # Current time in milliseconds
+            self.add_threshold_change(timestamp, buy_threshold, sell_threshold)
+            
+    def add_threshold_change(self, timestamp, buy_threshold, sell_threshold):
+        """
+        Record a threshold change with its timestamp.
+        
+        Args:
+            timestamp: Timestamp of the threshold change
+            buy_threshold (float): New buy threshold
+            sell_threshold (float): New sell threshold
+        """
+        if isinstance(timestamp, int):
+            # Already in milliseconds
+            ts_millis = timestamp
+        else:
+            # Convert datetime to milliseconds
+            ts_millis = int(timestamp.timestamp() * 1000)
+            
+        with self.lock:
+            self.thresholds = {'buy': buy_threshold, 'sell': sell_threshold}
+            self.threshold_history.append({
+                'timestamp': ts_millis,
+                'buy_threshold': buy_threshold,
+                'sell_threshold': sell_threshold
+            })
+            
+            # Limit history size to prevent memory issues
+            if len(self.threshold_history) > config.MAX_PRICE_HISTORY:
+                self.threshold_history = self.threshold_history[-config.MAX_PRICE_HISTORY:]
+            
+    def update_thresholds(self, thresholds_data):
+        """
+        Update the chart thresholds and record the change in history.
+        
+        Args:
+            thresholds_data (dict): Dictionary containing thresholds with keys:
+                - 'buy': Buy threshold value
+                - 'sell': Sell threshold value
+                - 'timestamp': (optional) Timestamp of the change, defaults to current time
+        """
+        buy_threshold = thresholds_data.get('buy')
+        sell_threshold = thresholds_data.get('sell')
+        timestamp = thresholds_data.get('timestamp', time.time())
+        
+        if buy_threshold is None or sell_threshold is None:
+            print(f"Warning: Invalid thresholds provided: buy={buy_threshold}, sell={sell_threshold}")
+            return False
+        
+        # Convert timestamp to milliseconds if needed
+        if isinstance(timestamp, int) and timestamp > 1000000000000:  # Already in milliseconds
+            ts_millis = timestamp
+        else:
+            # Convert seconds to milliseconds
+            ts_millis = int(timestamp * 1000)
+        
+        with self.lock:
+            # Update current thresholds
+            self.thresholds = {'buy': buy_threshold, 'sell': sell_threshold}
+            
+            # Add to history
+            self.threshold_history.append({
+                'timestamp': ts_millis,
+                'buy_threshold': buy_threshold,
+                'sell_threshold': sell_threshold
+            })
+            
+            # Limit history size
+            if len(self.threshold_history) > config.MAX_PRICE_HISTORY:
+                self.threshold_history = self.threshold_history[-config.MAX_PRICE_HISTORY:]
+        
+        print(f"Chart thresholds updated: Buy=${buy_threshold}, Sell=${sell_threshold}")
+        return True
+    
     def clear_data(self):
         """Clear all chart data - useful when switching coins"""
         with self.lock:
@@ -33,6 +109,7 @@ class ChartManager:
             self.buy_trades = []
             self.sell_trades = []
             self.trade_log = []
+            self.threshold_history = []
             self.open_positions = []
             self.net_invested = 0.0
             self.cumulative_profit = 0.0
@@ -151,16 +228,17 @@ class ChartManager:
             self.trade_log.append(trade_details)
             
     def get_chart_data(self):
-        """Get all chart data for the web interface"""
+        """Get all chart data as a dictionary for the web interface"""
         with self.lock:
             data = {
-                'symbol': self.current_symbol,
-                'price_history': self.price_history[:],
-                'buy_trades': self.buy_trades[:],
-                'sell_trades': self.sell_trades[:],
-                'thresholds': self.thresholds.copy(),
-                'trade_log': self.trade_log[:],  # Include trade log in the response
-                'net_invested': self.net_invested,
-                'cumulative_profit': self.cumulative_profit
+                'price_history': self.price_history[:],  # Create a copy of the list
+                'buy_trades': self.buy_trades[:],  # Create a copy of the list
+                'sell_trades': self.sell_trades[:],  # Create a copy of the list
+                'symbol': self.current_symbol,  # Immutable, no copy needed
+                'thresholds': self.thresholds.copy(),  # Create a copy of the dictionary
+                'threshold_history': self.threshold_history[:],  # Create a copy of the list
+                'trade_log': self.trade_log[:],  # Create a copy of the list
+                'cumulative_profit': self.cumulative_profit,  # Immutable, no copy needed
+                'net_invested': self.net_invested  # Immutable, no copy needed
             }
-        return data 
+            return data 

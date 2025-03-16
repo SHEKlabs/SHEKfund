@@ -23,10 +23,17 @@
             color: #3399ff;
         }
         .chart-container {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 5px;
+            height: 400px; /* Set fixed height for the chart */
             position: relative;
-            height: 70vh;
-            width: 95%;
-            margin: 0 auto;
+        }
+        #priceChart {
+            width: 100%;
+            height: 100%;
         }
         .status-panel {
             margin-top: 20px;
@@ -41,9 +48,13 @@
         }
         .price-up {
             color: #00cc00;
+            transition: color 0.5s ease;
+            animation: pulse-green 1.5s;
         }
         .price-down {
             color: #ff3333;
+            transition: color 0.5s ease;
+            animation: pulse-red 1.5s;
         }
         .last-fetch {
             font-size: 0.8em;
@@ -52,9 +63,14 @@
         }
         .waiting-message {
             text-align: center;
-            margin-top: 30px;
-            font-size: 18px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            font-size: 16px;
             color: #3399ff;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 5px;
         }
         .blinking {
             animation: blink 1.5s infinite;
@@ -153,31 +169,380 @@
         .profit-zero {
             color: #3399ff;
         }
+        
+        /* Trade Setup Panel Styles */
+        .setup-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 5px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #bbbbbb;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background-color: #333;
+            color: #ffffff;
+        }
+        
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .btn-primary {
+            background-color: #3399ff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2277dd;
+        }
+        
+        .btn-trading {
+            background-color: #228B22; /* Forest Green */
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .btn-trading:hover {
+            background-color: #1e7a1e; /* Slightly darker Forest Green */
+        }
+        
+        .radio-group {
+            margin-bottom: 10px;
+        }
+        
+        .radio-group label {
+            display: inline;
+            margin-right: 15px;
+            color: #bbbbbb;
+        }
+        
+        .radio-group input {
+            margin-right: 5px;
+        }
+        
+        .threshold-result {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background-color: #222;
+            display: none;
+        }
+        
+        .success-message {
+            color: #00cc00;
+        }
+        
+        .error-message {
+            color: #ff3333;
+        }
+        
+        /* Selection Panel Styles */
+        .selection-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 5px;
+        }
+        
+        .selection-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .selection-group {
+            flex: 1;
+            margin-right: 10px;
+        }
+        
+        .selection-group:last-child {
+            margin-right: 0;
+        }
+        
+        select.form-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background-color: #333;
+            color: #ffffff;
+            cursor: pointer;
+        }
+        
+        @keyframes pulse-green {
+            0% { color: #00cc00; text-shadow: 0 0 0px #00cc00; }
+            50% { color: #00ff00; text-shadow: 0 0 10px #00ff00; }
+            100% { color: #00cc00; text-shadow: 0 0 0px #00cc00; }
+        }
+        
+        @keyframes pulse-red {
+            0% { color: #ff3333; text-shadow: 0 0 0px #ff3333; }
+            50% { color: #ff0000; text-shadow: 0 0 10px #ff0000; }
+            100% { color: #ff3333; text-shadow: 0 0 0px #ff3333; }
+        }
+        
+        .trading-status {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background-color: #228B22; /* Forest Green */
+            color: white;
+            border-radius: 5px;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            z-index: 100;
+            animation: pulse 2s infinite;
+        }
+        
+        .trading-status.active {
+            display: block;
+        }
+        
+        .trade-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            z-index: 100;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            transform: translateX(200%);
+            transition: transform 0.5s ease;
+        }
+        
+        .trade-notification.buy {
+            background-color: #00cc00;
+        }
+        
+        .trade-notification.sell {
+            background-color: #ff3333;
+        }
+        
+        .trade-notification.show {
+            transform: translateX(0);
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(34, 139, 34, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 139, 34, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 139, 34, 0); }
+        }
+        
+        /* Immediate Trade Panel Styles */
+        .immediate-trade-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .trade-control {
+            width: 48%;
+            padding: 15px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            background-color: #333;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        
+        .info-text {
+            color: #999;
+            font-style: italic;
+            margin-bottom: 15px;
+        }
+        
+        /* Provisional trade row styling */
+        .provisional-trade {
+            animation: pulse-pending 2s infinite;
+            background-color: rgba(61, 61, 61, 0.7) !important;
+        }
+        
+        @keyframes pulse-pending {
+            0% { background-color: rgba(61, 61, 61, 0.7); }
+            50% { background-color: rgba(50, 50, 80, 0.7); }
+            100% { background-color: rgba(61, 61, 61, 0.7); }
+        }
     </style>
 </head>
 <body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">SHEKfund Trading Bot</a>
+            <button id="reload-button" class="btn btn-outline-light me-2" onclick="location.reload()">
+                <i class="fas fa-sync-alt"></i> Reload
+            </button>
+        </div>
+    </nav>
+    
     <h1>SHEKfund Trading Dashboard</h1>
     
-    <!-- Waiting message shown before coin selection -->
-    <div id="waiting-container" class="waiting-message">
-        <h2>Welcome to SHEKfund Trading Bot</h2>
-        <p>Please return to the terminal to select a coin to trade.</p>
-        <p>After selecting a coin in the terminal, the trading dashboard will appear here automatically.</p>
-        <p class="blinking">Waiting for coin selection in terminal...</p>
+    <!-- Trading Status Indicator -->
+    <div id="trading-status" class="trading-status">
+        TRADING ACTIVE
     </div>
     
-    <!-- Chart and status panel (hidden initially) -->
-    <div id="trading-content" class="hidden">
+    <!-- Trade Notification -->
+    <div id="trade-notification" class="trade-notification">
+        Trade executed
+    </div>
+    
+    <!-- Coin and Algorithm Selection Panel -->
+    <div class="selection-panel">
+        <div class="selection-row">
+            <div class="selection-group">
+                <label for="coin-select">Select Coin:</label>
+                <select id="coin-select" class="form-control">
+                    <option value="" disabled selected>Choose a coin</option>
+                    <!-- Will be populated from available coins -->
+                </select>
+            </div>
+            <div class="selection-group">
+                <label for="algo-select">Select Algorithm:</label>
+                <select id="algo-select" class="form-control">
+                    <option value="" disabled selected>Choose an algorithm</option>
+                    <!-- Will be populated from available algorithms -->
+                </select>
+            </div>
+        </div>
+        <button id="start-trading-btn" class="btn btn-trading">Start Trading</button>
+        <div id="selection-result" class="threshold-result">
+            <p id="selection-message"></p>
+        </div>
+    </div>
+    
+    <!-- Status panel with algorithm name and price -->
+    <div class="status-panel">
+        <div class="selection-row">
+            <div>Current Algorithm: <span id="algorithm-name" class="value">Not selected</span></div>
+            <div>Current Price: <span id="current-price" class="value">Loading...</span></div>
+        </div>
+    </div>
+    
+    <!-- Trade Setup Panel -->
+    <div id="trade-setup-panel" class="setup-panel">
+        <h3>Trade Setup</h3>
+        <div class="radio-group">
+            <label>
+                <input type="radio" name="threshold-type" value="percentage" checked> Percentage from Current Price
+            </label>
+            <label>
+                <input type="radio" name="threshold-type" value="price"> Specific Price in USD
+            </label>
+        </div>
+        
+        <div class="form-group">
+            <label for="buy-value">Buy Threshold:</label>
+            <input type="number" id="buy-value" class="form-control" value="-5" step="0.01">
+            <small id="buy-helper" class="form-text">For percentage: negative value = buy below current price</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="sell-value">Sell Threshold:</label>
+            <input type="number" id="sell-value" class="form-control" value="5" step="0.01">
+            <small id="sell-helper" class="form-text">For percentage: positive value = sell above current price</small>
+        </div>
+        
+        <button id="set-thresholds-btn" class="btn btn-primary">Set Thresholds</button>
+        
+        <div id="threshold-result" class="threshold-result">
+            <p id="result-message"></p>
+        </div>
+    </div>
+    
+    <!-- Immediate Trade Panel -->
+    <div id="immediate-trade-panel" class="setup-panel">
+        <h3>Immediate Trade Execution</h3>
+        <p class="info-text">Execute trades at the current market price regardless of algorithm status.</p>
+        
+        <div class="immediate-trade-container">
+            <div class="trade-control">
+                <div class="form-group">
+                    <label for="buy-now-amount">Buy Amount (USD):</label>
+                    <input type="number" id="buy-now-amount" class="form-control" value="100" min="1" step="1">
+                </div>
+                <button id="buy-now-btn" class="btn btn-success">Buy Now</button>
+            </div>
+            
+            <div class="trade-control">
+                <div class="form-group">
+                    <label for="sell-now-amount">Sell Amount (USD):</label>
+                    <input type="number" id="sell-now-amount" class="form-control" value="100" min="1" step="1">
+                </div>
+                <button id="sell-now-btn" class="btn btn-danger">Sell Now</button>
+            </div>
+        </div>
+        
+        <div id="immediate-trade-result" class="threshold-result">
+            <p id="immediate-result-message"></p>
+        </div>
+    </div>
+    
+    <!-- Message displayed before starting trading -->
+    <div id="waiting-container" class="waiting-message">
+        <p>Configure settings above and click "Start Trading" to begin live trading.</p>
+        <p class="blinking">Waiting for setup...</p>
+    </div>
+    
+    <!-- Chart always visible -->
         <div class="chart-container">
             <canvas id="priceChart"></canvas>
         </div>
+    
+    <!-- Trading status panels (initially show placeholder data) -->
+    <div id="trading-content">
         <div class="status-panel">
             <h3>Trading Status</h3>
-            <p>Selected Coin: <span id="selected-coin" class="value">Loading...</span></p>
-            <p>Current Price: <span id="current-price" class="value">Loading...</span></p>
-            <p>Buy Threshold: <span id="buy-threshold" class="value">Loading...</span></p>
-            <p>Sell Threshold: <span id="sell-threshold" class="value">Loading...</span></p>
-            <p class="last-fetch">Last Updated: <span id="last-updated">Loading...</span></p>
+            <p>Selected Coin: <span id="selected-coin" class="value">Not selected</span></p>
+            <p>Current Price: <span id="current-price-detail" class="value">-</span></p>
+            <p>Buy Threshold: <span id="buy-threshold" class="value">-</span></p>
+            <p>Sell Threshold: <span id="sell-threshold" class="value">-</span></p>
+            <p class="last-fetch">Last Updated: <span id="last-updated">-</span></p>
         </div>
         
         <!-- P&L Summary Panel -->
@@ -229,35 +594,1052 @@
         const annotationPlugin = window['chartjs-plugin-annotation'];
         Chart.register(annotationPlugin);
         
-        // Check if trading has started
-        function checkTradingStarted() {
-            fetch('/data')
+        // Global variables
+        let selectedCoin = null;
+        let selectedAlgo = null;
+        let currentPrice = null;
+        let isTrading = false;
+        
+        // Price update interval management
+        let priceUpdateInterval = null;
+        let dataUpdateInterval = null;
+        
+        // Load available coins and algorithms on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            resetIntervals();
+            loadAvailableCoins();
+            loadAvailableAlgorithms();
+            setupEventListeners();
+            
+            // Initialize chart on page load
+            initializeChart();
+            window.chartInitialized = true;
+        });
+        
+        // Load available coins
+        function loadAvailableCoins() {
+            fetch('/available_coins')
                 .then(response => response.json())
                 .then(data => {
-                    if (data.symbol && data.symbol !== "") {
-                        // Hide waiting message and show trading content
-                        document.getElementById('waiting-container').classList.add('hidden');
-                        document.getElementById('trading-content').classList.remove('hidden');
-                        
-                        // Initialize and start the chart if not already done
-                        if (!window.chartInitialized) {
-                            initializeChart();
-                            window.chartInitialized = true;
+                    const coinSelect = document.getElementById('coin-select');
+                    coinSelect.innerHTML = '<option value="" disabled selected>Choose a coin</option>';
+                    
+                    data.coins.forEach(coin => {
+                        const option = document.createElement('option');
+                        option.value = coin;
+                        option.textContent = coin;
+                        coinSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error loading available coins:', error));
+        }
+        
+        // Load available algorithms
+        function loadAvailableAlgorithms() {
+            fetch('/available_algorithms')
+                .then(response => response.json())
+                .then(data => {
+                    const algoSelect = document.getElementById('algo-select');
+                    algoSelect.innerHTML = '<option value="" disabled selected>Choose an algorithm</option>';
+                    
+                    data.algorithms.forEach(algo => {
+                        const option = document.createElement('option');
+                        option.value = algo;
+                        option.textContent = algo;
+                        algoSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error loading available algorithms:', error));
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Coin selection change
+            document.getElementById('coin-select').addEventListener('change', function() {
+                selectedCoin = this.value;
+                if (selectedCoin) {
+                    fetch('/select_coin', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ coin: selectedCoin })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            showSelectionMessage(data.message, true);
+                            // Start fetching the price for this coin
+                            startPriceUpdates();
+                        } else {
+                            showSelectionMessage(data.message, false);
                         }
+                    })
+                    .catch(error => {
+                        console.error('Error selecting coin:', error);
+                        showSelectionMessage('Error selecting coin. Please try again.', false);
+                    });
+                }
+            });
+            
+            // Algorithm selection change
+            document.getElementById('algo-select').addEventListener('change', function() {
+                selectedAlgo = this.value;
+                if (selectedAlgo) {
+                    fetch('/select_algorithm', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ algorithm: selectedAlgo })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            showSelectionMessage(data.message, true);
+                            document.getElementById('algorithm-name').textContent = selectedAlgo;
+                            
+                            // Show/hide threshold setup based on algorithm
+                            if (selectedAlgo === 'OG_buy_sell_threshold_algo') {
+                                document.getElementById('trade-setup-panel').style.display = 'block';
+                            } else {
+                                document.getElementById('trade-setup-panel').style.display = 'none';
+                            }
+                        } else {
+                            showSelectionMessage(data.message, false);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error selecting algorithm:', error);
+                        showSelectionMessage('Error selecting algorithm. Please try again.', false);
+                    });
+                }
+            });
+            
+            // Start trading button
+            document.getElementById('start-trading-btn').addEventListener('click', function() {
+                if (!selectedCoin || !selectedAlgo) {
+                    showSelectionMessage('Please select both a coin and an algorithm before starting.', false);
+                    return;
+                }
+                
+                fetch('/start_trading', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        coin: selectedCoin,
+                        algorithm: selectedAlgo
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showSelectionMessage(data.message, true);
+                        isTrading = true;
+                        console.log("Trading started - isTrading:", isTrading); // Debug log
+                        
+                        // Show trading status indicator
+                        document.getElementById('trading-status').classList.add('active');
+                        
+                        // Hide waiting message
+                        document.getElementById('waiting-container').classList.add('hidden');
+                        
+                        // Update selected coin in trading status
+                        document.getElementById('selected-coin').textContent = selectedCoin;
+                        
+                        // Immediately fetch initial trading data
+                        updateData();
                     } else {
-                        // Check again in 2 seconds
-                        setTimeout(checkTradingStarted, 2000);
+                        showSelectionMessage(data.message, false);
                     }
                 })
                 .catch(error => {
-                    console.error('Error checking trading status:', error);
-                    // Retry after delay
-                    setTimeout(checkTradingStarted, 5000);
+                    console.error('Error starting trading:', error);
+                    showSelectionMessage('Error starting trading. Please try again.', false);
+                });
+            });
+            
+            // Threshold type radio buttons
+            const thresholdTypeRadios = document.querySelectorAll('input[name="threshold-type"]');
+            const buyValueInput = document.getElementById('buy-value');
+            const sellValueInput = document.getElementById('sell-value');
+            const buyHelper = document.getElementById('buy-helper');
+            const sellHelper = document.getElementById('sell-helper');
+            
+            // Toggle helper text based on threshold type
+            function updateHelperText() {
+                const type = document.querySelector('input[name="threshold-type"]:checked').value;
+                if (type === 'percentage') {
+                    buyHelper.textContent = 'For percentage: negative value = buy below current price';
+                    sellHelper.textContent = 'For percentage: positive value = sell above current price';
+                    buyValueInput.placeholder = '-5';
+                    sellValueInput.placeholder = '5';
+                    } else {
+                    buyHelper.textContent = 'Specific price to buy at (in USD)';
+                    sellHelper.textContent = 'Specific price to sell at (in USD)';
+                    buyValueInput.placeholder = '45000';
+                    sellValueInput.placeholder = '55000';
+                }
+            }
+            
+            // Initialize helper text
+            updateHelperText();
+            
+            // Add change event listeners to radio buttons
+            thresholdTypeRadios.forEach(radio => {
+                radio.addEventListener('change', updateHelperText);
+            });
+            
+            // Set thresholds button
+            document.getElementById('set-thresholds-btn').addEventListener('click', function() {
+                if (!currentPrice) {
+                    showThresholdResult('Current price not available. Please wait for price to load.', false);
+                    return;
+                }
+                
+                const type = document.querySelector('input[name="threshold-type"]:checked').value;
+                const buyValue = parseFloat(document.getElementById('buy-value').value);
+                const sellValue = parseFloat(document.getElementById('sell-value').value);
+                
+                if (isNaN(buyValue) || isNaN(sellValue)) {
+                    showThresholdResult('Please enter valid numbers for both thresholds', false);
+                    return;
+                }
+                
+                console.log("Sending threshold update:", { type, buy_value: buyValue, sell_value: sellValue }); // Debug log
+                
+                // Disable the button to prevent multiple submissions
+                const thresholdButton = document.getElementById('set-thresholds-btn');
+                thresholdButton.disabled = true;
+                thresholdButton.textContent = "Updating...";
+                
+                // Make sure the chart is rendering properly
+                if (!window.priceChart || !window.chartInitialized) {
+                    console.log("Chart not initialized, initializing now");
+                    initializeChart();
+                    window.chartInitialized = true;
+                }
+                
+                // Send request to update thresholds
+                fetch('/update_thresholds', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        type: type,
+                        buy_value: buyValue,
+                        sell_value: sellValue
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Re-enable the button
+                    thresholdButton.disabled = false;
+                    thresholdButton.textContent = "Set Thresholds";
+                    
+                    if (data.status === 'success') {
+                        // Update the UI with the new thresholds immediately
+                        document.getElementById('buy-threshold').textContent = `$${data.buy_threshold.toFixed(2)}`;
+                        document.getElementById('sell-threshold').textContent = `$${data.sell_threshold.toFixed(2)}`;
+                        
+                        // Show a visible indication that thresholds were updated
+                        const buyThresholdEl = document.getElementById('buy-threshold');
+                        const sellThresholdEl = document.getElementById('sell-threshold');
+                        
+                        buyThresholdEl.classList.add('price-up');
+                        sellThresholdEl.classList.add('price-up');
+                        
+                        setTimeout(() => {
+                            buyThresholdEl.classList.remove('price-up');
+                            sellThresholdEl.classList.remove('price-up');
+                        }, 2000);
+                        
+                        // Update the chart annotations with new thresholds
+                        if (window.priceChart && window.priceChart.options && window.priceChart.options.plugins.annotation) {
+                            // Make sure the annotations object exists
+                            if (!window.priceChart.options.plugins.annotation.annotations) {
+                                window.priceChart.options.plugins.annotation.annotations = {};
+                            }
+                            
+                            // Create or update the buy threshold annotation
+                            if (!window.priceChart.options.plugins.annotation.annotations.buyThreshold) {
+                                window.priceChart.options.plugins.annotation.annotations.buyThreshold = {
+                                    type: 'line',
+                                    yMin: data.buy_threshold,
+                                    yMax: data.buy_threshold,
+                                    borderColor: '#ff3333',
+                                    borderWidth: 2,
+                                    borderDash: [5, 5],
+                                    label: {
+                                        content: 'Buy',
+                                        enabled: true,
+                                        position: 'left',
+                                        backgroundColor: '#ff3333'
+                                    }
+                                };
+                            } else {
+                                window.priceChart.options.plugins.annotation.annotations.buyThreshold.yMin = data.buy_threshold;
+                                window.priceChart.options.plugins.annotation.annotations.buyThreshold.yMax = data.buy_threshold;
+                            }
+                            
+                            // Create or update the sell threshold annotation
+                            if (!window.priceChart.options.plugins.annotation.annotations.sellThreshold) {
+                                window.priceChart.options.plugins.annotation.annotations.sellThreshold = {
+                                    type: 'line',
+                                    yMin: data.sell_threshold,
+                                    yMax: data.sell_threshold,
+                                    borderColor: '#00cc00',
+                                    borderWidth: 2,
+                                    borderDash: [5, 5],
+                                    label: {
+                                        content: 'Sell',
+                                        enabled: true,
+                                        position: 'left',
+                                        backgroundColor: '#00cc00'
+                                    }
+                                };
+                            } else {
+                                window.priceChart.options.plugins.annotation.annotations.sellThreshold.yMin = data.sell_threshold;
+                                window.priceChart.options.plugins.annotation.annotations.sellThreshold.yMax = data.sell_threshold;
+                            }
+                            
+                            // Make sure the chart visually updates
+                            window.priceChart.update('quiet');
+                        }
+                        
+                        // For clearer understanding, let's explain to the user what will happen based on the current price
+                        const currentPriceDisplay = data.current_price || currentPrice;
+                        let readableMessage = `Thresholds updated successfully! Buy: $${data.buy_threshold.toFixed(2)}, Sell: $${data.sell_threshold.toFixed(2)}`;
+                        
+                        // Check if we are in position based on trade history
+                        const inPosition = isUserInPosition();
+                        
+                        // Check if price is already beyond thresholds and show immediate feedback
+                        if (currentPriceDisplay <= data.buy_threshold && !inPosition) {
+                            readableMessage = `Thresholds updated! Current price $${currentPriceDisplay.toFixed(2)} is BELOW buy threshold $${data.buy_threshold.toFixed(2)} - a BUY trade should execute soon`;
+                            // Show in notification
+                            showAlert(`BUY IMMINENT: Price is below threshold!`, 'success');
+                        } else if (currentPriceDisplay >= data.sell_threshold && inPosition) {
+                            readableMessage = `Thresholds updated! Current price $${currentPriceDisplay.toFixed(2)} is ABOVE sell threshold $${data.sell_threshold.toFixed(2)} - a SELL trade should execute soon`;
+                            // Show in notification
+                            showAlert(`SELL IMMINENT: Price is above threshold!`, 'success');
+                        } else if (inPosition) {
+                            readableMessage += ` - Currently in position, will SELL when price reaches $${data.sell_threshold.toFixed(2)}`;
+                        } else {
+                            readableMessage += ` - Not in position, will BUY when price reaches $${data.buy_threshold.toFixed(2)}`;
+                        }
+                        
+                        showThresholdResult(readableMessage, true);
+                        
+                        // Force an immediate trade check by calling updateData more frequently
+                        console.log("Force updating data after threshold change");
+                        
+                        // Increase update frequency temporarily to catch any trades
+                        const frequentUpdates = 5; // Number of rapid updates to perform
+                        const updateDelay = 400; // Milliseconds between updates
+                        
+                        // First immediate update
+                        updateData();
+                        
+                        // Then schedule several more rapid updates
+                        for (let i = 1; i <= frequentUpdates; i++) {
+                            setTimeout(() => {
+                                console.log(`Frequent update #${i} after threshold change`);
+                                updateData();
+                            }, i * updateDelay);
+                        }
+                        
+                        // If current price is beyond threshold, add a delay and check again to see if a trade was executed
+                        if ((currentPriceDisplay <= data.buy_threshold && !inPosition) || 
+                            (currentPriceDisplay >= data.sell_threshold && inPosition)) {
+                            
+                            // Provide feedback to user that we're waiting for trade execution
+                            let checkingMessage = inPosition ? 
+                                `Checking for SELL execution (price $${currentPriceDisplay.toFixed(2)} >= sell threshold $${data.sell_threshold.toFixed(2)})...` :
+                                `Checking for BUY execution (price $${currentPriceDisplay.toFixed(2)} <= buy threshold $${data.buy_threshold.toFixed(2)})...`;
+                            
+                            // Show additional feedback in threshold result
+                            const resultElement = document.getElementById('result-message');
+                            resultElement.textContent = `${readableMessage} - ${checkingMessage}`;
+                            
+                            // Add a blinking notification to indicate waiting for trade
+                            const tradingStatus = document.getElementById('trading-status');
+                            const originalText = tradingStatus.textContent;
+                            tradingStatus.textContent = inPosition ? "WAITING FOR SELL" : "WAITING FOR BUY";
+                            tradingStatus.style.backgroundColor = inPosition ? "#dc3545" : "#28a745";
+                            tradingStatus.classList.add('active');
+                            
+                            // Reset the trading status after 10 seconds if no trade happens
+                            setTimeout(() => {
+                                tradingStatus.textContent = originalText;
+                                tradingStatus.style.backgroundColor = "";
+                            }, 10000);
+                        }
+                    } else {
+                        showThresholdResult(`Error: ${data.message}`, false);
+                    }
+                })
+                .catch(error => {
+                    // Re-enable the button
+                    thresholdButton.disabled = false;
+                    thresholdButton.textContent = "Set Thresholds";
+                    showThresholdResult(`Error: ${error.message}`, false);
+                    console.error("Error setting thresholds:", error);
+                });
+            });
+        }
+        
+        // Show result message for selection panel
+        function showSelectionMessage(message, isSuccess) {
+            const resultElement = document.getElementById('selection-message');
+            const resultContainer = document.getElementById('selection-result');
+            
+            resultElement.textContent = message;
+            resultElement.className = isSuccess ? 'success-message' : 'error-message';
+            resultContainer.style.display = 'block';
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                resultContainer.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Show result message for threshold panel
+        function showThresholdResult(message, isSuccess) {
+            const resultElement = document.getElementById('result-message');
+            const resultContainer = document.getElementById('threshold-result');
+            
+            resultElement.textContent = message;
+            resultElement.className = isSuccess ? 'success-message' : 'error-message';
+            resultContainer.style.display = 'block';
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                resultContainer.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Reset all intervals
+        function resetIntervals() {
+            console.log("Resetting all update intervals");
+            if (priceUpdateInterval) {
+                clearInterval(priceUpdateInterval);
+                priceUpdateInterval = null;
+            }
+            if (dataUpdateInterval) {
+                clearInterval(dataUpdateInterval);
+                dataUpdateInterval = null;
+            }
+            window.updateInterval = null;
+        }
+        
+        // Start price updates (for current price display only)
+        function startPriceUpdates() {
+            if (priceUpdateInterval) clearInterval(priceUpdateInterval);
+            
+            // Fetch immediately then set interval
+            fetchCurrentPrice();
+            priceUpdateInterval = setInterval(fetchCurrentPrice, 3000);
+            console.log("Price updates started with interval ID:", priceUpdateInterval);
+        }
+        
+        // Start data updates (for trading)
+        function startDataUpdates() {
+            console.log("Starting data updates");
+            if (dataUpdateInterval) clearInterval(dataUpdateInterval);
+            
+            // First update immediately
+            updateData();
+            
+            // Then set interval - keep track of it globally
+            dataUpdateInterval = setInterval(updateData, 1000); // Changed to 1 second for faster updates
+            window.updateInterval = dataUpdateInterval;
+            
+            console.log("Data updates started with interval ID:", dataUpdateInterval);
+        }
+        
+        // Update trade markers on the chart
+        function updateTradeMarkers(chartData) {
+            if (!window.priceChart || !window.priceChart.data) return;
+            
+            // Update buy trades
+            if (chartData.buy_trades && Array.isArray(chartData.buy_trades)) {
+                // Convert the server data format to the chart format
+                const buyTrades = chartData.buy_trades.map(trade => {
+                    return {
+                        x: new Date(trade[0]), // timestamp
+                        y: trade[1]  // price
+                    };
+                });
+                window.priceChart.data.datasets[1].data = buyTrades;
+            }
+            
+            // Update sell trades
+            if (chartData.sell_trades && Array.isArray(chartData.sell_trades)) {
+                // Convert the server data format to the chart format
+                const sellTrades = chartData.sell_trades.map(trade => {
+                    return {
+                        x: new Date(trade[0]), // timestamp
+                        y: trade[1]  // price
+                    };
+                });
+                window.priceChart.data.datasets[2].data = sellTrades;
+            }
+            
+            // Make sure to update the chart
+            window.priceChart.update('quiet');
+        }
+        
+        // Update P&L information
+        function updatePnL(chartData) {
+            if (chartData.net_invested !== undefined) {
+                const netInvestedElem = document.getElementById('net-invested');
+                if (netInvestedElem) {
+                    netInvestedElem.textContent = `$${chartData.net_invested.toFixed(2)}`;
+                }
+            }
+            
+            if (chartData.cumulative_profit !== undefined) {
+                const cumulativeProfitElem = document.getElementById('cumulative-profit');
+                if (cumulativeProfitElem) {
+                    cumulativeProfitElem.textContent = `$${chartData.cumulative_profit.toFixed(2)}`;
+                }
+                
+                // Calculate profit percentage if we have both values
+                const profitPercentageElem = document.getElementById('profit-percentage');
+                if (profitPercentageElem && chartData.net_invested !== undefined && chartData.net_invested > 0) {
+                    const profitPercentage = (chartData.cumulative_profit / chartData.net_invested) * 100;
+                    profitPercentageElem.textContent = `${profitPercentage.toFixed(2)}%`;
+                }
+            }
+        }
+        
+        // Update threshold lines on the chart
+        function updateThresholds(thresholds) {
+            if (!window.priceChart || !window.priceChart.options) {
+                console.warn("Chart not initialized, cannot update thresholds");
+                return;
+            }
+            
+            // Make sure the annotations plugin is enabled
+            if (!window.priceChart.options.plugins.annotation) {
+                window.priceChart.options.plugins.annotation = {};
+            }
+            
+            // Make sure the annotations object exists
+            if (!window.priceChart.options.plugins.annotation.annotations) {
+                window.priceChart.options.plugins.annotation.annotations = {};
+            }
+            
+            // Create or update the buy threshold annotation
+            if (!window.priceChart.options.plugins.annotation.annotations.buyThreshold) {
+                window.priceChart.options.plugins.annotation.annotations.buyThreshold = {
+                    type: 'line',
+                    yMin: thresholds.buy,
+                    yMax: thresholds.buy,
+                    borderColor: '#ff3333', // Red for buy
+                    borderWidth: 2,
+                    borderDash: [5, 5], // Dashed line
+                    label: {
+                        content: 'Buy',
+                        enabled: true,
+                        position: 'left',
+                        backgroundColor: '#ff3333'
+                    }
+                };
+            } else {
+                window.priceChart.options.plugins.annotation.annotations.buyThreshold.yMin = thresholds.buy;
+                window.priceChart.options.plugins.annotation.annotations.buyThreshold.yMax = thresholds.buy;
+                // Ensure color and dash settings are maintained
+                window.priceChart.options.plugins.annotation.annotations.buyThreshold.borderColor = '#ff3333';
+                window.priceChart.options.plugins.annotation.annotations.buyThreshold.borderDash = [5, 5];
+                window.priceChart.options.plugins.annotation.annotations.buyThreshold.label.backgroundColor = '#ff3333';
+            }
+            
+            // Create or update the sell threshold annotation
+            if (!window.priceChart.options.plugins.annotation.annotations.sellThreshold) {
+                window.priceChart.options.plugins.annotation.annotations.sellThreshold = {
+                    type: 'line',
+                    yMin: thresholds.sell,
+                    yMax: thresholds.sell,
+                    borderColor: '#00cc00', // Green for sell
+                    borderWidth: 2,
+                    borderDash: [5, 5], // Dashed line
+                    label: {
+                        content: 'Sell',
+                        enabled: true,
+                        position: 'left',
+                        backgroundColor: '#00cc00'
+                    }
+                };
+            } else {
+                window.priceChart.options.plugins.annotation.annotations.sellThreshold.yMin = thresholds.sell;
+                window.priceChart.options.plugins.annotation.annotations.sellThreshold.yMax = thresholds.sell;
+                // Ensure color and dash settings are maintained
+                window.priceChart.options.plugins.annotation.annotations.sellThreshold.borderColor = '#00cc00';
+                window.priceChart.options.plugins.annotation.annotations.sellThreshold.borderDash = [5, 5];
+                window.priceChart.options.plugins.annotation.annotations.sellThreshold.label.backgroundColor = '#00cc00';
+            }
+            
+            // Update the chart
+            window.priceChart.update('quiet');
+        }
+        
+        // Main update function to fetch latest data
+        function updateData() {
+            // Check if we've disconnected and need to reconnect
+            if (window.updateInterval === null && isTrading) {
+                console.log("Update interval was cleared but trading is active - restarting updates");
+                startDataUpdates();
+                return;
+            }
+            
+            // Track when the request started for debugging
+            const requestStartTime = new Date().getTime();
+            
+            fetch('/update')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const responseTime = new Date().getTime() - requestStartTime;
+                    console.log(`Update response received in ${responseTime}ms`);
+                    
+                    // Update price display
+                    if (data.price !== null && data.price !== undefined) {
+                        currentPrice = data.price;
+                        
+                        // Update all price display elements
+                        const priceDisplays = [
+                            document.getElementById('current-price'),
+                            document.getElementById('current-price-detail')
+                        ];
+                        
+                        priceDisplays.forEach(element => {
+                            if (element) {
+                                const oldPrice = parseFloat(element.textContent.replace('$', ''));
+                                element.textContent = `$${currentPrice.toFixed(2)}`;
+                                
+                                // Add visual indicator for price change
+                                if (oldPrice > currentPrice) {
+                                    element.classList.remove('price-up');
+                                    element.classList.add('price-down');
+                                } else if (oldPrice < currentPrice) {
+                                    element.classList.remove('price-down');
+                                    element.classList.add('price-up');
+                                }
+                                
+                                // Reset the class after a moment
+                                setTimeout(() => {
+                                    element.classList.remove('price-up', 'price-down');
+                                }, 2000);
+                            }
+                        });
+                        
+                        // Update last updated timestamp
+                        const lastUpdatedElem = document.getElementById('last-updated');
+                        if (lastUpdatedElem) {
+                            lastUpdatedElem.textContent = data.last_updated || new Date().toLocaleTimeString();
+                        }
+                        
+                        // Always update the chart with the latest price - this is critical
+                        if (window.priceChart && window.priceChart.data && window.priceChart.data.datasets) {
+                            const now = new Date();
+                            
+                            // Always add the current price point to ensure continuous updates
+                            window.priceChart.data.datasets[0].data.push({
+                                x: now,
+                                y: currentPrice
+                            });
+                            
+                            // Limit number of points to prevent performance issues
+                            const maxPoints = 200; // Increased from 100 for smoother chart
+                            if (window.priceChart.data.datasets[0].data.length > maxPoints) {
+                                window.priceChart.data.datasets[0].data.shift();
+                            }
+                            
+                            // Make sure chart options are properly configured
+                            ensureChartOptions();
+                            
+                            // Force a chart update
+                            window.priceChart.update('quiet'); // Use 'quiet' mode for better performance
+                            
+                            // Log that we've updated the chart
+                            console.log(`Chart updated with price: $${currentPrice.toFixed(2)} at ${now.toLocaleTimeString()}`);
+                        } else {
+                            console.warn("Chart not properly initialized - reinitializing");
+                            // If the chart isn't properly initialized, initialize it
+                            if (!window.chartInitialized) {
+                                initializeChart();
+                                window.chartInitialized = true;
+                            }
+                        }
+                    }
+                    
+                    // Update trade information if available
+                    if (data.chart_data && data.chart_data.trades && data.chart_data.trades.length > 0) {
+                        updateTradeTable(data.chart_data.trades);
+                    }
+                    
+                    // Update buy/sell trade markers
+                    if (data.chart_data) {
+                        updateTradeMarkers(data.chart_data);
+                    }
+                    
+                    // Update P&L data if available
+                    if (data.chart_data) {
+                        updatePnL(data.chart_data);
+                    }
+                    
+                    // Update threshold lines if available
+                    if (data.chart_data && data.chart_data.thresholds) {
+                        updateThresholds(data.chart_data.thresholds);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error in updateData:', error);
+                    // If we have connection issues, attempt to restart updates
+                    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                        console.log("Network error detected - attempting to restart updates");
+                        // Wait 5 seconds before attempting to reconnect
+                        setTimeout(() => {
+                            resetIntervals();
+                            startDataUpdates();
+                        }, 5000);
+                    }
                 });
         }
         
-        // Start checking if trading has begun
-        checkTradingStarted();
+        // Ensure chart options are properly set
+        function ensureChartOptions() {
+            if (!window.priceChart || !window.priceChart.options) return;
+            
+            // Make sure we have proper time formatting
+            if (!window.priceChart.options.scales.x.time) {
+                window.priceChart.options.scales.x.time = {
+                    unit: 'second',
+                    time: {
+                        unit: 'second',
+                        displayFormats: {
+                            second: 'HH:mm:ss'
+                        }
+                    },
+                    grid: { 
+                        color: 'rgba(255, 255, 255, 0.1)' 
+                    },
+                    ticks: {
+                        color: '#ffffff'
+                    }
+                };
+            }
+            
+            // Make sure annotations plugin is enabled
+            if (!window.priceChart.options.plugins.annotation) {
+                window.priceChart.options.plugins.annotation = {
+                    annotations: {
+                        buyThreshold: {
+                            type: 'line',
+                            yMin: 0,
+                            yMax: 0,
+                            borderColor: '#00cc00',
+                            borderWidth: 2,
+                            label: {
+                                content: 'Buy',
+                                enabled: true,
+                                position: 'left',
+                                backgroundColor: '#00cc00'
+                            }
+                        },
+                        sellThreshold: {
+                            type: 'line',
+                            yMin: 0,
+                            yMax: 0,
+                            borderColor: '#ff3333',
+                            borderWidth: 2,
+                            label: {
+                                content: 'Sell',
+                                enabled: true,
+                                position: 'left',
+                                backgroundColor: '#ff3333'
+                            }
+                        }
+                    }
+                };
+            }
+        }
+        
+        // Function to update the trade table with the latest trades
+        function updateTradeTable(trades) {
+            if (!trades || trades.length === 0) return;
+            
+            const tableBody = document.getElementById('trade-log-body');
+            let newTradesFound = false;
+            let lastTradeFound = false;
+            
+            // Clear "No trades" message if present
+            if (tableBody.innerHTML.includes('No trades executed yet')) {
+                tableBody.innerHTML = '';
+            }
+            
+            // Get the set of existing trade IDs in the table
+            const existingTradeIds = new Set();
+            Array.from(tableBody.querySelectorAll('tr'))
+                .forEach(row => {
+                    const id = row.getAttribute('data-time');
+                    if (id) existingTradeIds.add(id);
+                });
+            
+            // Process trades in reverse order (newest first)
+            const sortedTrades = [...trades].sort((a, b) => parseInt(b.time) - parseInt(a.time));
+            
+            // Debug info
+            console.log(`Processing ${sortedTrades.length} trades, table has ${existingTradeIds.size} existing trades`);
+            
+            // Add each trade to the table
+            sortedTrades.forEach((trade, index) => {
+                // Skip if missing essential data
+                if (!trade || !trade.time) return;
+                
+                // Check if this trade is already in the table
+                const tradeId = trade.time.toString();
+                if (existingTradeIds.has(tradeId)) {
+                    return; // Skip if already in table
+                }
+                
+                // This is a new trade
+                newTradesFound = true;
+                console.log(`New trade found: ${trade.type} at $${trade.price}`);
+                
+                // Show notification for the most recent new trade
+                if (!lastTradeFound) {
+                    lastTradeFound = true;
+                    showTradeNotification(trade.type, trade.price, trade.amount);
+                }
+                
+                const row = document.createElement('tr');
+                row.setAttribute('data-time', tradeId);
+                
+                // Format the date
+                const tradeDate = new Date(parseInt(trade.time));
+                const formattedTime = tradeDate.toLocaleTimeString();
+                
+                // Determine row class based on trade type
+                const typeClass = (trade.type === 'buy') ? 'trade-buy' : 'trade-sell';
+                
+                // Calculate profit percentage (handle missing values safely)
+                let profitPercentage = 0;
+                const netInvested = parseFloat(trade.net_invested ?? 0);
+                const profit = parseFloat(trade.profit ?? 0);
+                
+                if (netInvested > 0) {
+                    profitPercentage = (profit / netInvested) * 100;
+                }
+                
+                // Use optional chaining and nullish coalescing to handle missing properties
+                const price = parseFloat(trade.price ?? 0);
+                const amount = parseFloat(trade.amount ?? 0);
+                const dollarAmount = parseFloat(trade.dollar_amount ?? (price * amount));
+                const coin = trade.coin ?? 'Unknown';
+                const description = trade.description ?? `${trade.type ?? 'Trade'} executed`;
+                
+                // Build the row content
+                                row.innerHTML = `
+                                    <td>${formattedTime}</td>
+                    <td class="${typeClass}">${(trade.type ?? 'trade').toUpperCase()}</td>
+                    <td>${coin}</td>
+                    <td>$${price.toFixed(2)}</td>
+                    <td>${amount.toFixed(8)}</td>
+                    <td>$${dollarAmount.toFixed(2)}</td>
+                    <td>$${profit.toFixed(2)}</td>
+                    <td>${profitPercentage.toFixed(2)}%</td>
+                    <td>$${netInvested.toFixed(2)}</td>
+                    <td>${description}</td>
+                `;
+                
+                // Add to the table (at the top for most recent first)
+                if (tableBody.firstChild) {
+                    tableBody.insertBefore(row, tableBody.firstChild);
+                } else {
+                    tableBody.appendChild(row);
+                }
+            });
+            
+            // If new trades were found, scroll to the top of the table
+            if (newTradesFound) {
+                const tableContainer = document.querySelector('.trade-table-container');
+                if (tableContainer) {
+                    tableContainer.scrollTop = 0;
+                }
+            }
+        }
+        
+        // Function to show a notification when a new trade happens
+        function showTradeNotification(tradeType, price, amount) {
+            const notification = document.getElementById('trade-notification');
+            
+            // Set text and color based on trade type
+            if (tradeType === 'buy') {
+                notification.textContent = `BUY ORDER EXECUTED: ${amount} at $${price.toFixed(2)}`;
+                notification.className = 'trade-notification buy';
+            } else {
+                notification.textContent = `SELL ORDER EXECUTED: ${amount} at $${price.toFixed(2)}`;
+                notification.className = 'trade-notification sell';
+            }
+            
+            // Show the notification
+            notification.classList.add('show');
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+        
+        // Check if the user is currently in a position based on trade history
+        function isUserInPosition() {
+            // Get the trade table rows
+            const tradeRows = document.querySelectorAll("#trade-table tbody tr");
+            
+            // If no trades yet, return false
+            if (tradeRows.length === 0 || tradeRows[0].cells.length === 1) {
+                return false;
+            }
+            
+            // Count buy and sell trades
+            let buyCount = 0;
+            let sellCount = 0;
+            
+            tradeRows.forEach(row => {
+                const tradeType = row.cells[1]?.textContent.toLowerCase(); // Type column
+                if (tradeType === 'buy') {
+                    buyCount++;
+                } else if (tradeType === 'sell') {
+                    sellCount++;
+                }
+            });
+            
+            // If we have more buys than sells, we're in a position
+            return buyCount > sellCount;
+        }
+        
+        // Make sure we clean up intervals when starting/stopping
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                // Page is hidden, reduce update frequency to save resources
+                if (window.updateDataInterval) clearInterval(window.updateDataInterval);
+                if (window.priceUpdateInterval) clearInterval(window.priceUpdateInterval);
+                console.log("Reduced update frequency due to page being hidden");
+            } else {
+                // Page is visible again, restore normal update frequency
+                if (isTrading) {
+                    if (window.updateDataInterval) clearInterval(window.updateDataInterval);
+                    window.updateDataInterval = setInterval(updateData, 1000); // Changed to 1 second for faster updates
+                }
+                if (window.priceUpdateInterval) clearInterval(window.priceUpdateInterval);
+                window.priceUpdateInterval = setInterval(fetchCurrentPrice, 3000); // Changed to 3 seconds
+                console.log("Restored normal update frequency");
+            }
+        });
+
+        // Ensure we have a clean start
+        window.addEventListener('beforeunload', function() {
+            if (window.updateDataInterval) clearInterval(window.updateDataInterval);
+            if (window.priceUpdateInterval) clearInterval(window.priceUpdateInterval);
+        });
+
+        // Clear existing intervals and set up new ones when changing pages
+        function resetIntervals() {
+            if (window.updateDataInterval) clearInterval(window.updateDataInterval);
+            if (window.priceUpdateInterval) clearInterval(window.priceUpdateInterval);
+            
+            startPriceUpdates();
+            if (isTrading) {
+                window.updateDataInterval = setInterval(updateData, 1000); // Changed to 1 second for faster updates
+            }
+        }
+
+        // Fetch current price for display
+        function fetchCurrentPrice() {
+            if (!selectedCoin) {
+                console.log("No coin selected, skipping price fetch");
+                return;
+            }
+            
+            fetch('/current_price?force_fresh=true')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'success' && data.price !== null) {
+                        currentPrice = data.price;
+                        
+                        // Update price display elements
+                        const priceDisplays = [
+                            document.getElementById('current-price'),
+                            document.getElementById('current-price-detail')
+                        ];
+                        
+                        priceDisplays.forEach(element => {
+                            if (element) {
+                                const oldPrice = parseFloat(element.textContent.replace('$', ''));
+                                element.textContent = `$${currentPrice.toFixed(2)}`;
+                                
+                                // Add visual indicator for price change
+                                if (oldPrice > currentPrice) {
+                                    element.classList.remove('price-up');
+                                    element.classList.add('price-down');
+                                } else if (oldPrice < currentPrice) {
+                                    element.classList.remove('price-down');
+                                    element.classList.add('price-up');
+                                }
+                                
+                                // Reset the class after a moment
+                                setTimeout(() => {
+                                    element.classList.remove('price-up', 'price-down');
+                                }, 2000);
+                            }
+                        });
+                        
+                        // Update last updated timestamp
+                        const lastUpdatedElem = document.getElementById('last-updated');
+                        if (lastUpdatedElem) {
+                            const now = new Date();
+                            lastUpdatedElem.textContent = now.toLocaleTimeString();
+                        }
+                        
+                        // Update the chart with the price even if not trading
+                        if (window.priceChart && window.priceChart.data && window.priceChart.data.datasets) {
+                            const now = new Date();
+                            
+                            // Add current price point to chart
+                            window.priceChart.data.datasets[0].data.push({
+                                x: now,
+                                y: currentPrice
+                            });
+                            
+                            // Limit number of points 
+                            if (window.priceChart.data.datasets[0].data.length > 100) {
+                                window.priceChart.data.datasets[0].data.shift();
+                            }
+                            
+                            // Update chart with new data
+                            window.priceChart.update('quiet');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching current price:', error);
+                });
+        }
 
         // Initialize the chart
         function initializeChart() {
@@ -340,12 +1722,11 @@
                                     yMax: 0,
                                     borderColor: '#00cc00',
                                     borderWidth: 2,
-                                    label: { 
-                                        enabled: true, 
-                                        content: 'Buy Threshold', 
-                                        backgroundColor: '#00cc00', 
-                                        color: '#fff',
-                                        position: 'start'
+                                    label: {
+                                        content: 'Buy',
+                                        enabled: true,
+                                        position: 'left',
+                                        backgroundColor: '#00cc00'
                                     }
                                 },
                                 sellThreshold: {
@@ -354,12 +1735,11 @@
                                     yMax: 0,
                                     borderColor: '#ff3333',
                                     borderWidth: 2,
-                                    label: { 
-                                        enabled: true, 
-                                        content: 'Sell Threshold', 
-                                        backgroundColor: '#ff3333', 
-                                        color: '#fff',
-                                        position: 'end' 
+                                    label: {
+                                        content: 'Sell',
+                                        enabled: true,
+                                        position: 'left',
+                                        backgroundColor: '#ff3333'
                                     }
                                 }
                             }
@@ -385,243 +1765,375 @@
             
             // Store chart reference globally
             window.priceChart = chart;
-
-            // Store previous price for comparison (for color change)
-            let previousPrice = null;
-
-            // Function to update the chart with new data from /data endpoint
-            function updateChartData() {
-                fetch('/data')
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        // Update price chart
-                        if (data.price_history && data.price_history.length > 0) {
-                            chart.data.datasets[0].data = data.price_history.map(d => ({ 
-                                x: new Date(d[0]), 
-                                y: d[1] 
-                            }));
-                            
-                            // Update buy trades
-                            chart.data.datasets[1].data = data.buy_trades.map(d => ({ 
-                                x: new Date(d[0]), 
-                                y: d[1] 
-                            }));
-                            
-                            // Update sell trades
-                            chart.data.datasets[2].data = data.sell_trades.map(d => ({ 
-                                x: new Date(d[0]), 
-                                y: d[1] 
-                            }));
-                            
-                            // Update thresholds
-                            if (data.thresholds) {
-                                chart.options.plugins.annotation.annotations.buyThreshold.yMin = data.thresholds.buy;
-                                chart.options.plugins.annotation.annotations.buyThreshold.yMax = data.thresholds.buy;
-                                chart.options.plugins.annotation.annotations.sellThreshold.yMin = data.thresholds.sell;
-                                chart.options.plugins.annotation.annotations.sellThreshold.yMax = data.thresholds.sell;
-                                
-                                // Update threshold values in status panel
-                                document.getElementById('buy-threshold').textContent = `$${data.thresholds.buy.toFixed(2)}`;
-                                document.getElementById('sell-threshold').textContent = `$${data.thresholds.sell.toFixed(2)}`;
-                            }
-                            
-                            // Update symbol in status panel
-                            if (data.symbol) {
-                                document.getElementById('selected-coin').textContent = data.symbol;
-                            }
-                            
-                            // Update the chart
-                            chart.update();
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching chart data:', error);
-                    });
-            }
-
-            // Function to update the real-time price display from /update endpoint
-            function updateRealTimeData() {
-                fetch('/update')
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.price) {
-                            const priceElement = document.getElementById('current-price');
-                            
-                            // Format the price
-                            const formattedPrice = `$${data.price.toFixed(2)}`;
-                            
-                            // Change color based on price movement
-                            if (previousPrice !== null) {
-                                if (data.price > previousPrice) {
-                                    priceElement.className = 'value price-up';
-                                } else if (data.price < previousPrice) {
-                                    priceElement.className = 'value price-down';
-                                } else {
-                                    priceElement.className = 'value';
-                                }
-                            }
-                            
-                            // Update the price display
-                            priceElement.textContent = formattedPrice;
-                            
-                            // Update previous price
-                            previousPrice = data.price;
-                        }
-                        
-                        // Update last updated timestamp
-                        if (data.last_updated) {
-                            document.getElementById('last-updated').textContent = data.last_updated;
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching real-time data:', error);
-                    });
-            }
-
-            // Function to update the trade table with latest trade data
-            function updateTradeTable() {
-                const tradeLogBody = document.getElementById('trade-log-body');
-                
-                fetch('/data')
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.trade_log && data.trade_log.length > 0) {
-                            // Clear existing rows
-                            tradeLogBody.innerHTML = '';
-                            
-                            // Sort trades by time (most recent first)
-                            const sortedTrades = [...data.trade_log].sort((a, b) => b.time - a.time);
-                            
-                            // Add each trade to the table
-                            sortedTrades.forEach(trade => {
-                                const row = document.createElement('tr');
-                                
-                                // Format time
-                                const tradeTime = new Date(trade.time);
-                                const formattedTime = tradeTime.toLocaleTimeString();
-                                
-                                // Format other values
-                                const formattedPrice = trade.price.toFixed(2);
-                                const formattedAmount = trade.amount.toFixed(8);
-                                const formattedValue = trade.dollar_amount.toFixed(2);
-                                
-                                // Format profit and determine profit class
-                                let formattedProfit = trade.profit;
-                                let profitClass = '';
-                                if (trade.profit !== "N/A") {
-                                    formattedProfit = trade.profit.toFixed(2);
-                                    profitClass = trade.profit > 0 ? 'profit-positive' : 
-                                                  trade.profit < 0 ? 'profit-negative' : 'profit-zero';
-                                }
-                                
-                                // Format net invested
-                                const formattedNetInvested = trade.net_invested.toFixed(2);
-                                
-                                // Calculate profit percentage
-                                let profitPercentage = 'N/A';
-                                let profitPercentClass = '';
-                                if (trade.profit !== "N/A" && trade.net_invested > 0) {
-                                    profitPercentage = ((trade.profit / trade.net_invested) * 100).toFixed(2) + '%';
-                                    profitPercentClass = trade.profit > 0 ? 'profit-positive' : 
-                                                        trade.profit < 0 ? 'profit-negative' : 'profit-zero';
-                                } else if (trade.profit !== "N/A" && trade.net_invested === 0) {
-                                    // Handle case where we've sold everything and net_invested is 0
-                                    profitPercentage = trade.profit > 0 ? "∞%" : "0%";
-                                    profitPercentClass = trade.profit > 0 ? 'profit-positive' : 'profit-zero';
-                                }
-                                
-                                // Set row class based on trade type
-                                const typeClass = trade.type === 'buy' ? 'trade-buy' : 'trade-sell';
-                                
-                                // Get coin symbol directly from the trade entry
-                                const coinSymbol = trade.coin || '';
-                                
-                                row.innerHTML = `
-                                    <td>${formattedTime}</td>
-                                    <td class="${typeClass}">${trade.type.toUpperCase()}</td>
-                                    <td>${coinSymbol}</td>
-                                    <td>${formattedPrice}</td>
-                                    <td>${formattedAmount}</td>
-                                    <td>${formattedValue}</td>
-                                    <td class="${profitClass}">${formattedProfit}</td>
-                                    <td class="${profitPercentClass}">${profitPercentage}</td>
-                                    <td>${formattedNetInvested}</td>
-                                    <td>${trade.description}</td>
-                                `;
-                                
-                                tradeLogBody.appendChild(row);
-                            });
-                            
-                            // Update the P&L summary
-                            if (data.cumulative_profit !== undefined) {
-                                const cumProfitElem = document.getElementById('cumulative-profit');
-                                const netInvestedElem = document.getElementById('net-invested');
-                                const profitPercentageElem = document.getElementById('profit-percentage');
-                                
-                                // Format the values
-                                const formattedProfit = `$${data.cumulative_profit.toFixed(2)}`;
-                                const formattedNetInvested = `$${data.net_invested.toFixed(2)}`;
-                                
-                                // Calculate profit percentage
-                                let profitPercentage = '0.00%';
-                                if (data.net_invested > 0) {
-                                    profitPercentage = `${((data.cumulative_profit / data.net_invested) * 100).toFixed(2)}%`;
-                                } else if (data.net_invested === 0 && data.cumulative_profit > 0) {
-                                    profitPercentage = '∞%'; // If we've sold everything and have profit
-                                }
-                                
-                                // Update the elements with formatted values
-                                cumProfitElem.textContent = formattedProfit;
-                                netInvestedElem.textContent = formattedNetInvested;
-                                profitPercentageElem.textContent = profitPercentage;
-                                
-                                // Add appropriate class based on profit value
-                                if (data.cumulative_profit > 0) {
-                                    cumProfitElem.className = 'metric-value profit-positive';
-                                    profitPercentageElem.className = 'metric-value profit-positive';
-                                } else if (data.cumulative_profit < 0) {
-                                    cumProfitElem.className = 'metric-value profit-negative';
-                                    profitPercentageElem.className = 'metric-value profit-negative';
-                                } else {
-                                    cumProfitElem.className = 'metric-value profit-zero';
-                                    profitPercentageElem.className = 'metric-value profit-zero';
-                                }
-                            }
-                        } else {
-                            // No trades yet
-                            tradeLogBody.innerHTML = '<tr><td colspan="10">No trades executed yet</td></tr>';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching trade data:', error);
-                    });
-            }
-
-            // Set intervals for different update frequencies
-            setInterval(updateChartData, 1000);  // Chart update every 1 second
-            setInterval(updateRealTimeData, 5000);  // Price update every 5 seconds
-            setInterval(updateTradeTable, 2000);  // Trade table update every 2 seconds
             
-            // Initial updates
-            updateChartData();
-            updateRealTimeData();
-            updateTradeTable();
+            // Mark chart as initialized
+            window.chartInitialized = true;
+            
+            console.log("Chart initialized successfully");
         }
+
+        // Add a function to check if price updates are still running
+        function checkPriceUpdates() {
+            const lastUpdateEl = document.getElementById('last-updated');
+            if (!lastUpdateEl) return;
+            
+            const lastUpdateText = lastUpdateEl.textContent;
+            if (!lastUpdateText || !lastUpdateText.includes(':')) return;
+            
+            // Extract the timestamp from the text
+            const lastUpdateTime = new Date(lastUpdateText.replace('Last updated: ', ''));
+            const currentTime = new Date();
+            
+            // If last update was more than 20 seconds ago, restart price updates
+            if ((currentTime - lastUpdateTime) > 20000) {
+                console.log('Price updates appear to have stopped. Restarting...');
+                resetIntervals();
+                startPriceUpdates();
+                startDataUpdates();
+            }
+        }
+
+        // Call the check function every 30 seconds
+        setInterval(checkPriceUpdates, 30000);
+
+        // Function to show alert messages
+        function showAlert(message, type) {
+            // Use trade notification system for alerts
+            const notification = document.getElementById('trade-notification');
+            notification.textContent = message;
+            
+            if (type === 'success') {
+                notification.className = 'trade-notification buy show';
+            } else if (type === 'danger') {
+                notification.className = 'trade-notification sell show';
+            } else {
+                notification.className = 'trade-notification show';
+            }
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+
+        // Add this after the other script functions but before the document ready section
+        function executeImmediateBuy() {
+            const buyAmount = parseFloat(document.getElementById('buy-now-amount').value);
+            if (isNaN(buyAmount) || buyAmount <= 0) {
+                showAlert('Please enter a valid buy amount greater than 0', 'danger');
+                return;
+            }
+            
+            const selectedCoin = document.getElementById('coin-select').value;
+            if (!selectedCoin) {
+                showAlert('Please select a coin first', 'danger');
+                return;
+            }
+            
+            // Disable buttons during API call
+            document.getElementById('buy-now-btn').disabled = true;
+            document.getElementById('sell-now-btn').disabled = true;
+            
+            // Get current price for the optimistic update
+            const currentPriceValue = parseFloat(document.getElementById('current-price').textContent.replace('$', ''));
+            
+            // OPTIMISTIC UI UPDATES - Show notification immediately
+            const tradeNotification = document.getElementById('trade-notification');
+            tradeNotification.textContent = `BUY ORDER EXECUTING: $${buyAmount.toFixed(2)} at market price`;
+            tradeNotification.className = 'trade-notification buy show';
+            
+            // OPTIMISTIC UI UPDATE - Add provisional entry to trade table
+            const provisionalTradeId = `provisional-buy-${Date.now()}`;
+            const tableBody = document.getElementById('trade-log-body');
+            const now = new Date();
+            const formattedTime = now.toLocaleTimeString();
+            
+            // Create provisional row
+            const provisionalRow = document.createElement('tr');
+            provisionalRow.setAttribute('data-time', provisionalTradeId);
+            provisionalRow.setAttribute('class', 'provisional-trade');
+            provisionalRow.innerHTML = `
+                <td>${formattedTime}</td>
+                <td class="trade-buy">BUY (PENDING)</td>
+                <td>${selectedCoin}</td>
+                <td>$${currentPriceValue.toFixed(2)}</td>
+                <td>Calculating...</td>
+                <td>$${buyAmount.toFixed(2)}</td>
+                <td colspan="4">Trade in progress...</td>
+            `;
+            
+            // Add to the top of the table
+            if (tableBody.firstChild) {
+                tableBody.insertBefore(provisionalRow, tableBody.firstChild);
+            } else {
+                tableBody.innerHTML = ''; // Clear "No trades" message if present
+                tableBody.appendChild(provisionalRow);
+            }
+            
+            // Also start more frequent updates to catch the trade confirmation faster
+            const tempUpdateInterval = setInterval(updateData, 500);
+            
+            fetch('/execute_buy', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    amount: buyAmount
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Clear the temp update interval
+                clearInterval(tempUpdateInterval);
+                
+                // Re-enable buttons
+                document.getElementById('buy-now-btn').disabled = false;
+                document.getElementById('sell-now-btn').disabled = false;
+                
+                // Update notification with final status
+                if (data.status === 'success') {
+                    tradeNotification.textContent = `BUY ORDER EXECUTED: $${buyAmount.toFixed(2)} at market price`;
+                    showAlert(data.message, 'success');
+                    
+                    // Force update data to refresh the chart and trade history
+                    updateData();
+                    
+                    // Remove provisional row - the real one will be added by updateData
+                    const provisionalRow = document.querySelector(`tr[data-time="${provisionalTradeId}"]`);
+                    if (provisionalRow) {
+                        provisionalRow.remove();
+                    }
+                } else {
+                    tradeNotification.textContent = `BUY ORDER FAILED: ${data.message}`;
+                    showAlert(`Buy failed: ${data.message}`, 'danger');
+                    
+                    // Update provisional row to show failure
+                    const provisionalRow = document.querySelector(`tr[data-time="${provisionalTradeId}"]`);
+                    if (provisionalRow) {
+                        provisionalRow.innerHTML = `
+                            <td>${formattedTime}</td>
+                            <td class="trade-buy">BUY (FAILED)</td>
+                            <td>${selectedCoin}</td>
+                            <td>$${currentPriceValue.toFixed(2)}</td>
+                            <td>N/A</td>
+                            <td>$${buyAmount.toFixed(2)}</td>
+                            <td colspan="4">${data.message}</td>
+                        `;
+                        provisionalRow.style.opacity = '0.6';
+                        
+                        // Remove the failed row after 5 seconds
+                        setTimeout(() => {
+                            if (provisionalRow.parentNode) {
+                                provisionalRow.remove();
+                            }
+                        }, 5000);
+                    }
+                }
+            })
+            .catch(error => {
+                // Clear the temp update interval
+                clearInterval(tempUpdateInterval);
+                
+                console.error('Error executing buy:', error);
+                
+                // Update notification with error
+                tradeNotification.textContent = `BUY ORDER FAILED: Network Error`;
+                showAlert(`Error executing buy: ${error}`, 'danger');
+                
+                // Update provisional row to show failure
+                const provisionalRow = document.querySelector(`tr[data-time="${provisionalTradeId}"]`);
+                if (provisionalRow) {
+                    provisionalRow.innerHTML = `
+                        <td>${formattedTime}</td>
+                        <td class="trade-buy">BUY (FAILED)</td>
+                        <td>${selectedCoin}</td>
+                        <td>$${currentPriceValue.toFixed(2)}</td>
+                        <td>N/A</td>
+                        <td>$${buyAmount.toFixed(2)}</td>
+                        <td colspan="4">Network Error</td>
+                    `;
+                    provisionalRow.style.opacity = '0.6';
+                    
+                    // Remove the failed row after 5 seconds
+                    setTimeout(() => {
+                        if (provisionalRow.parentNode) {
+                            provisionalRow.remove();
+                        }
+                    }, 5000);
+                }
+                
+                // Re-enable buttons
+                document.getElementById('buy-now-btn').disabled = false;
+                document.getElementById('sell-now-btn').disabled = false;
+            });
+            
+            // Hide notification after 5 seconds
+            setTimeout(() => {
+                tradeNotification.classList.remove('show');
+            }, 5000);
+        }
+
+        function executeImmediateSell() {
+            const sellAmount = parseFloat(document.getElementById('sell-now-amount').value);
+            if (isNaN(sellAmount) || sellAmount <= 0) {
+                showAlert('Please enter a valid sell amount greater than 0', 'danger');
+                return;
+            }
+            
+            const selectedCoin = document.getElementById('coin-select').value;
+            if (!selectedCoin) {
+                showAlert('Please select a coin first', 'danger');
+                return;
+            }
+            
+            // Disable buttons during API call
+            document.getElementById('buy-now-btn').disabled = true;
+            document.getElementById('sell-now-btn').disabled = true;
+            
+            // Get current price for the optimistic update
+            const currentPriceValue = parseFloat(document.getElementById('current-price').textContent.replace('$', ''));
+            
+            // OPTIMISTIC UI UPDATES - Show notification immediately
+            const tradeNotification = document.getElementById('trade-notification');
+            tradeNotification.textContent = `SELL ORDER EXECUTING: $${sellAmount.toFixed(2)} at market price`;
+            tradeNotification.className = 'trade-notification sell show';
+            
+            // OPTIMISTIC UI UPDATE - Add provisional entry to trade table
+            const provisionalTradeId = `provisional-sell-${Date.now()}`;
+            const tableBody = document.getElementById('trade-log-body');
+            const now = new Date();
+            const formattedTime = now.toLocaleTimeString();
+            
+            // Create provisional row
+            const provisionalRow = document.createElement('tr');
+            provisionalRow.setAttribute('data-time', provisionalTradeId);
+            provisionalRow.setAttribute('class', 'provisional-trade');
+            provisionalRow.innerHTML = `
+                <td>${formattedTime}</td>
+                <td class="trade-sell">SELL (PENDING)</td>
+                <td>${selectedCoin}</td>
+                <td>$${currentPriceValue.toFixed(2)}</td>
+                <td>Calculating...</td>
+                <td>$${sellAmount.toFixed(2)}</td>
+                <td colspan="4">Trade in progress...</td>
+            `;
+            
+            // Add to the top of the table
+            if (tableBody.firstChild) {
+                tableBody.insertBefore(provisionalRow, tableBody.firstChild);
+            } else {
+                tableBody.innerHTML = ''; // Clear "No trades" message if present
+                tableBody.appendChild(provisionalRow);
+            }
+            
+            // Also start more frequent updates to catch the trade confirmation faster
+            const tempUpdateInterval = setInterval(updateData, 500);
+            
+            fetch('/execute_sell', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    amount: sellAmount
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Clear the temp update interval
+                clearInterval(tempUpdateInterval);
+                
+                // Re-enable buttons
+                document.getElementById('buy-now-btn').disabled = false;
+                document.getElementById('sell-now-btn').disabled = false;
+                
+                // Update notification with final status
+                if (data.status === 'success') {
+                    tradeNotification.textContent = `SELL ORDER EXECUTED: $${sellAmount.toFixed(2)} at market price`;
+                    showAlert(data.message, 'success');
+                    
+                    // Force update data to refresh the chart and trade history
+                    updateData();
+                    
+                    // Remove provisional row - the real one will be added by updateData
+                    const provisionalRow = document.querySelector(`tr[data-time="${provisionalTradeId}"]`);
+                    if (provisionalRow) {
+                        provisionalRow.remove();
+                    }
+                } else {
+                    tradeNotification.textContent = `SELL ORDER FAILED: ${data.message}`;
+                    showAlert(`Sell failed: ${data.message}`, 'danger');
+                    
+                    // Update provisional row to show failure
+                    const provisionalRow = document.querySelector(`tr[data-time="${provisionalTradeId}"]`);
+                    if (provisionalRow) {
+                        provisionalRow.innerHTML = `
+                            <td>${formattedTime}</td>
+                            <td class="trade-sell">SELL (FAILED)</td>
+                            <td>${selectedCoin}</td>
+                            <td>$${currentPriceValue.toFixed(2)}</td>
+                            <td>N/A</td>
+                            <td>$${sellAmount.toFixed(2)}</td>
+                            <td colspan="4">${data.message}</td>
+                        `;
+                        provisionalRow.style.opacity = '0.6';
+                        
+                        // Remove the failed row after 5 seconds
+                        setTimeout(() => {
+                            if (provisionalRow.parentNode) {
+                                provisionalRow.remove();
+                            }
+                        }, 5000);
+                    }
+                }
+            })
+            .catch(error => {
+                // Clear the temp update interval
+                clearInterval(tempUpdateInterval);
+                
+                console.error('Error executing sell:', error);
+                
+                // Update notification with error
+                tradeNotification.textContent = `SELL ORDER FAILED: Network Error`;
+                showAlert(`Error executing sell: ${error}`, 'danger');
+                
+                // Update provisional row to show failure
+                const provisionalRow = document.querySelector(`tr[data-time="${provisionalTradeId}"]`);
+                if (provisionalRow) {
+                    provisionalRow.innerHTML = `
+                        <td>${formattedTime}</td>
+                        <td class="trade-sell">SELL (FAILED)</td>
+                        <td>${selectedCoin}</td>
+                        <td>$${currentPriceValue.toFixed(2)}</td>
+                        <td>N/A</td>
+                        <td>$${sellAmount.toFixed(2)}</td>
+                        <td colspan="4">Network Error</td>
+                    `;
+                    provisionalRow.style.opacity = '0.6';
+                    
+                    // Remove the failed row after 5 seconds
+                    setTimeout(() => {
+                        if (provisionalRow.parentNode) {
+                            provisionalRow.remove();
+                        }
+                    }, 5000);
+                }
+                
+                // Re-enable buttons
+                document.getElementById('buy-now-btn').disabled = false;
+                document.getElementById('sell-now-btn').disabled = false;
+            });
+            
+            // Hide notification after 5 seconds
+            setTimeout(() => {
+                tradeNotification.classList.remove('show');
+            }, 5000);
+        }
+
+        // Add these event listeners in the document ready function
+        document.getElementById('buy-now-btn').addEventListener('click', executeImmediateBuy);
+        document.getElementById('sell-now-btn').addEventListener('click', executeImmediateSell);
     </script>
 </body>
 </html> 

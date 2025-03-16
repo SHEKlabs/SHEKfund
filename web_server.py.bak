@@ -15,7 +15,6 @@ class WebServer:
         self.trading_bot = trading_bot
         self.data_fetcher = data_fetcher
         self.algorithm_name = algorithm_name
-        self.port = config.PORT  # Add port attribute
         
         # Configure logging based on configuration
         if config.FLASK_QUIET:
@@ -41,19 +40,6 @@ class WebServer:
         @self.app.route('/')
         def index():
             return render_template('index.html')
-        
-        @self.app.route('/shutdown', methods=['GET'])
-        def shutdown_server():
-            """Shutdown the Flask server (will only work in development mode)"""
-            try:
-                # Only works in werkzeug development server
-                func = request.environ.get('werkzeug.server.shutdown')
-                if func is None:
-                    return jsonify({"status": "error", "message": "Not running in Werkzeug server"})
-                func()
-                return jsonify({"status": "success", "message": "Server shutting down..."})
-            except Exception as e:
-                return jsonify({"status": "error", "message": str(e)})
         
         @self.app.route('/available_coins')
         def get_available_coins():
@@ -121,13 +107,10 @@ class WebServer:
             """Get the current price of the selected coin"""
             try:
                 if data_fetcher:
-                    # Check if force_fresh is requested in the query parameters
-                    force_fresh = 'force_fresh' in request.args
-                    
                     # Force a fresh price fetch rather than using a potentially cached value
                     if data_fetcher.current_symbol:
-                        current_price = data_fetcher.get_current_price(data_fetcher.current_symbol, force_fresh=force_fresh)
-                        print(f"Fetched {'fresh' if force_fresh else 'cached'} price for {data_fetcher.current_symbol}: {current_price}")
+                        current_price = data_fetcher.get_current_price(data_fetcher.current_symbol)
+                        print(f"Fetched fresh price for {data_fetcher.current_symbol}: {current_price}")
                     else:
                         # No coin selected yet
                         current_price = None
@@ -155,19 +138,6 @@ class WebServer:
                 coin = data.get('coin')
                 algorithm = data.get('algorithm')
                 
-                # Validate required inputs
-                if not coin:
-                    return jsonify({
-                        "status": "error", 
-                        "message": "No coin selected"
-                    })
-                    
-                if not algorithm:
-                    return jsonify({
-                        "status": "error", 
-                        "message": "No algorithm selected"
-                    })
-                
                 if coin not in AVAILABLE_COINS:
                     return jsonify({
                         "status": "error", 
@@ -192,78 +162,25 @@ class WebServer:
                 
                 # Get current thresholds if they were set by the user
                 current_thresholds = trading_bot.get_current_thresholds()
-                buy_threshold = data.get('buy_threshold', current_thresholds.get('buy'))
-                sell_threshold = data.get('sell_threshold', current_thresholds.get('sell'))
+                buy_threshold = current_thresholds.get('buy')
+                sell_threshold = current_thresholds.get('sell')
                 
                 # If no thresholds were set by the user, use the coin config defaults
                 if buy_threshold is None or sell_threshold is None:
                     buy_threshold = coin_config.get('buy_threshold', 0)
                     sell_threshold = coin_config.get('sell_threshold', 0)
                     
-                # Convert thresholds to float to ensure they're numeric
-                try:
-                    buy_threshold = float(buy_threshold)
-                    sell_threshold = float(sell_threshold)
-                except (ValueError, TypeError) as e:
-                    return jsonify({
-                        "status": "error",
-                        "message": f"Invalid threshold values: buy={buy_threshold}, sell={sell_threshold}. Error: {str(e)}"
-                    })
-                
-                # Validate thresholds
-                if buy_threshold <= 0 or sell_threshold <= 0:
-                    return jsonify({
-                        "status": "error",
-                        "message": f"Invalid threshold values: buy=${buy_threshold}, sell=${sell_threshold}. Thresholds must be positive."
-                    })
-                    
-                if buy_threshold >= sell_threshold:
-                    return jsonify({
-                        "status": "warning",
-                        "message": f"Buy threshold (${buy_threshold}) is greater than or equal to sell threshold (${sell_threshold}). Trading may not occur as expected."
-                    })
-                
                 # Get quantity from coin config
                 quantity = coin_config.get('quantity', 0)
-                if quantity <= 0:
-                    return jsonify({
-                        "status": "error",
-                        "message": f"Invalid quantity in coin config: {quantity}. Quantity must be positive."
-                    })
                 
                 # Make sure data_fetcher knows which coin we're trading
                 if data_fetcher:
-                    try:
-                        data_fetcher.set_coin(coin)
-                    except Exception as e:
-                        print(f"Error setting coin in data_fetcher: {str(e)}")
-                        return jsonify({
-                            "status": "error",
-                            "message": f"Failed to initialize price fetching for {coin}: {str(e)}"
-                        })
-                else:
-                    return jsonify({
-                        "status": "error",
-                        "message": "Data fetcher not initialized"
-                    })
+                    data_fetcher.set_coin(coin)
                     
                 # Create and set the algorithm
-                try:
-                    algo_instance = ALGO_LIBRARY[algorithm]()
-                    trading_bot.algorithm = algo_instance
-                    trading_bot.algorithm_name = algorithm
-                    
-                    # Set the algorithm thresholds
-                    if hasattr(algo_instance, 'set_thresholds') and callable(getattr(algo_instance, 'set_thresholds')):
-                        algo_instance.set_thresholds(buy_threshold, sell_threshold)
-                except Exception as e:
-                    print(f"Error initializing algorithm: {str(e)}")
-                    import traceback
-                    traceback.print_exc()
-                    return jsonify({
-                        "status": "error",
-                        "message": f"Failed to initialize algorithm {algorithm}: {str(e)}"
-                    })
+                algo_instance = ALGO_LIBRARY[algorithm]()
+                trading_bot.algorithm = algo_instance
+                trading_bot.algorithm_name = algorithm
                 
                 # Clear any previous trading state
                 trading_bot.stop_trading()
@@ -303,33 +220,25 @@ class WebServer:
         
         @self.app.route('/update')
         def get_update():
-            """Endpoint for real-time price updates with enhanced data"""
+            """Endpoint for real-time price updates"""
             try:
                 if data_fetcher:
                     # Get data with a timeout to prevent hanging
                     start_time = time.time()
                     latest_data = data_fetcher.get_latest_data()
                     chart_data = trading_bot.chart_manager.get_chart_data()
-                    current_thresholds = trading_bot.get_current_thresholds()
-                    
-                    # Thread-safe access to in_position state
-                    with trading_bot.state_lock:
-                        in_position = trading_bot.in_position
                     
                     # Make sure trade_log is properly included and renamed to 'trades' for frontend compatibility
                     if 'trade_log' in chart_data:
                         chart_data['trades'] = chart_data['trade_log']
                     
-                    # Combine data with algorithm name and current thresholds
+                    # Combine data with algorithm name
                     response = {
                         "price": latest_data.get("price"),
                         "symbol": latest_data.get("symbol"),
                         "last_updated": latest_data.get("last_updated"),
                         "chart_data": chart_data,
                         "algorithm_name": trading_bot.get_algorithm_name(),
-                        "buy_threshold": current_thresholds['buy'],
-                        "sell_threshold": current_thresholds['sell'],
-                        "in_position": in_position,
                         "response_time_ms": int((time.time() - start_time) * 1000)  # Track response time for debugging
                     }
                     
@@ -426,11 +335,22 @@ class WebServer:
                 old_thresholds = trading_bot.get_current_thresholds()
                 
                 # Update the thresholds in the trading bot - THIS IS THE CRITICAL PART
-                # The update_thresholds method will handle checking for trades with the new thresholds
                 trading_bot.update_thresholds(buy_threshold, sell_threshold)
                 
-                # Note: We no longer need to force a trade check here as update_thresholds already does that
-                # This eliminates the duplicate trade check and potential race condition
+                # Force the trading bot to check for trades immediately
+                if data_fetcher and data_fetcher.current_symbol and trading_bot.running:
+                    current_price = data_fetcher.get_current_price(data_fetcher.current_symbol, force_fresh=True)
+                    if current_price is not None:
+                        # Force an immediate trade check with the new thresholds
+                        print(f"Forcing immediate trade check with new thresholds and current price: ${current_price}")
+                        
+                        # Get coin configuration for quantity
+                        from coin_configs import COIN_CONFIGS
+                        coin_config = COIN_CONFIGS.get(data_fetcher.current_symbol, {})
+                        quantity = coin_config.get('quantity', 0.001)  # Default quantity if not found
+                        
+                        # Execute the trade check directly
+                        trading_bot.check_and_execute_trades(data_fetcher.current_symbol, current_price, quantity)
                 
                 # Verify the thresholds were set correctly
                 current_thresholds = trading_bot.get_current_thresholds()
@@ -451,13 +371,10 @@ class WebServer:
                     if current_price is not None:
                         print(f"Current price after threshold update: ${current_price}")
                         
-                        # Get the position state in a thread-safe way
-                        with trading_bot.state_lock:
-                            in_position = trading_bot.in_position
-                        
                         # Display detailed information about the current state
                         price_vs_buy = "BELOW" if current_price <= current_thresholds['buy'] else "ABOVE"
                         price_vs_sell = "BELOW" if current_price <= current_thresholds['sell'] else "ABOVE"
+                        in_position = trading_bot.in_position
                         
                         print(f"TRADE CHECK: Price ${current_price} is {price_vs_buy} buy threshold ${current_thresholds['buy']} and {price_vs_sell} sell threshold ${current_thresholds['sell']}")
                         print(f"POSITION STATE: {'In position' if in_position else 'Not in position'}")
@@ -489,226 +406,32 @@ class WebServer:
                 traceback.print_exc()
                 return jsonify({"status": "error", "message": str(e)})
             
-        @self.app.route('/execute_buy', methods=['POST'])
-        def execute_buy():
-            """
-            Execute an immediate buy trade at the current market price.
-            Works independently of the trading algorithm and doesn't require trading to be started.
-            """
-            try:
-                data = request.json
-                usd_amount = float(data.get('amount', 100))  # Default to $100 if not specified
-                
-                # Validate the coin is selected
-                if not data_fetcher or not data_fetcher.current_symbol:
-                    return jsonify({
-                        "status": "error",
-                        "message": "No coin selected. Please select a coin first."
-                    })
-                
-                # Get current price
-                current_price = data_fetcher.get_current_price(data_fetcher.current_symbol, force_fresh=True)
-                if current_price is None:
-                    return jsonify({
-                        "status": "error",
-                        "message": "Could not fetch current price. Please try again."
-                    })
-                
-                # Calculate quantity based on USD amount
-                coin_quantity = usd_amount / current_price
-                
-                print(f"\n=== EXECUTING IMMEDIATE BUY ORDER ===")
-                print(f"Coin: {data_fetcher.current_symbol}")
-                print(f"USD Amount: ${usd_amount}")
-                print(f"Current Price: ${current_price}")
-                print(f"Quantity: {coin_quantity}")
-                
-                # Execute the buy order
-                order = data_fetcher.place_buy_order(data_fetcher.current_symbol, coin_quantity)
-                
-                if order and order.get("status") == "filled":
-                    # Update trading bot's position status if it's tracking this coin
-                    # Only check if symbols match, don't require the bot to be running
-                    if hasattr(trading_bot, 'data_fetcher') and trading_bot.data_fetcher and trading_bot.data_fetcher.current_symbol == data_fetcher.current_symbol:
-                        # Thread-safe update of trading bot state
-                        with trading_bot.state_lock:
-                            trading_bot.in_position = True
-                            trading_bot.last_action = f"Manual buy at ${current_price:.2f}"
-                            print(f"Updated trading bot state: in_position={trading_bot.in_position}, last_action='{trading_bot.last_action}'")
-                    
-                    # Add to chart data
-                    trading_bot.chart_manager.add_buy_trade(current_price, coin_quantity, threshold_triggered=False)
-                    
-                    return jsonify({
-                        "status": "success",
-                        "message": f"Buy order executed successfully: {coin_quantity:.8f} {data_fetcher.current_symbol} at ${current_price:.2f}",
-                        "price": current_price,
-                        "quantity": coin_quantity,
-                        "usd_amount": usd_amount,
-                        "timestamp": int(time.time() * 1000)
-                    })
-                else:
-                    return jsonify({
-                        "status": "error",
-                        "message": f"Buy order failed: {order.get('message', 'Unknown error')}"
-                    })
-                
-            except Exception as e:
-                print(f"Error executing buy: {str(e)}")
-                import traceback
-                traceback.print_exc()
-                return jsonify({"status": "error", "message": str(e)})
-
-        @self.app.route('/execute_sell', methods=['POST'])
-        def execute_sell():
-            """
-            Execute an immediate sell trade at the current market price.
-            Works independently of the trading algorithm and doesn't require trading to be started.
-            """
-            try:
-                data = request.json
-                usd_amount = float(data.get('amount', 100))  # Default to $100 if not specified
-                
-                # Validate the coin is selected
-                if not data_fetcher or not data_fetcher.current_symbol:
-                    return jsonify({
-                        "status": "error",
-                        "message": "No coin selected. Please select a coin first."
-                    })
-                
-                # Get current price
-                current_price = data_fetcher.get_current_price(data_fetcher.current_symbol, force_fresh=True)
-                if current_price is None:
-                    return jsonify({
-                        "status": "error",
-                        "message": "Could not fetch current price. Please try again."
-                    })
-                
-                # Calculate quantity based on USD amount
-                coin_quantity = usd_amount / current_price
-                
-                print(f"\n=== EXECUTING IMMEDIATE SELL ORDER ===")
-                print(f"Coin: {data_fetcher.current_symbol}")
-                print(f"USD Amount: ${usd_amount}")
-                print(f"Current Price: ${current_price}")
-                print(f"Quantity: {coin_quantity}")
-                
-                # Execute the sell order
-                order = data_fetcher.place_sell_order(data_fetcher.current_symbol, coin_quantity)
-                
-                if order and order.get("status") == "filled":
-                    # Update trading bot's position status if it's tracking this coin
-                    # Only check if symbols match, don't require the bot to be running
-                    if hasattr(trading_bot, 'data_fetcher') and trading_bot.data_fetcher and trading_bot.data_fetcher.current_symbol == data_fetcher.current_symbol:
-                        # Thread-safe update of trading bot state
-                        with trading_bot.state_lock:
-                            trading_bot.in_position = False
-                            trading_bot.last_action = f"Manual sell at ${current_price:.2f}"
-                            print(f"Updated trading bot state: in_position={trading_bot.in_position}, last_action='{trading_bot.last_action}'")
-                    
-                    # Add to chart data
-                    trading_bot.chart_manager.add_sell_trade(current_price, coin_quantity, threshold_triggered=False)
-                    
-                    return jsonify({
-                        "status": "success",
-                        "message": f"Sell order executed successfully: {coin_quantity:.8f} {data_fetcher.current_symbol} at ${current_price:.2f}",
-                        "price": current_price,
-                        "quantity": coin_quantity,
-                        "usd_amount": usd_amount,
-                        "timestamp": int(time.time() * 1000)
-                    })
-                else:
-                    return jsonify({
-                        "status": "error",
-                        "message": f"Sell order failed: {order.get('message', 'Unknown error')}"
-                    })
-                
-            except Exception as e:
-                print(f"Error executing sell: {str(e)}")
-                import traceback
-                traceback.print_exc()
-                return jsonify({"status": "error", "message": str(e)})
-        
     def start(self):
         """Start the Flask server in a thread"""
+        # Determine whether to capture stdout from Flask
+        if config.FLASK_QUIET:
+            # Capture and discard stdout to prevent Flask startup messages
+            original_stdout = sys.stdout
+            sys.stdout = open('/dev/null', 'w')  # Redirect to /dev/null (Unix-like)
+            
         try:
-            print(f"\n=== Starting Web Server on port {self.port} ===")
-            self.thread = threading.Thread(target=self._run_server)
-            self.thread.daemon = True
-            self.thread.start()
-            print(f"Web server started successfully in thread: {self.thread.name}")
-            print(f"Access the interface at: http://localhost:{self.port}")
-            return True
-        except Exception as e:
-            print(f"Error starting web server: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            return False
-        
-    def shutdown(self):
-        """Clean shutdown of the web server"""
-        print("Shutting down web server...")
-        # There's no clean way to stop a Flask server in a thread,
-        # but we can try to clean up resources
-        try:
-            # Create a request to shutdown the server
-            import requests
-            try:
-                requests.get(f"http://{config.HOST}:{config.PORT}/shutdown", timeout=0.1)
-            except:
-                pass
-                
-            # Force the thread to terminate (not ideal but necessary)
-            if hasattr(self, 'server_thread') and self.server_thread.is_alive():
-                # Cannot directly terminate threads in Python, but marking as daemon
-                # ensures they'll be terminated when the main thread exits
-                self.server_thread.daemon = True
-                
-        except Exception as e:
-            print(f"Error during web server shutdown: {e}")
-        
-        print("Web server shutdown complete")
-
-    def _run_server(self):
-        """Run the Flask server - internal method called by start()"""
-        try:
-            # Determine whether to capture stdout from Flask
-            if hasattr(config, 'FLASK_QUIET') and config.FLASK_QUIET:
-                # Capture and discard stdout to prevent Flask startup messages
-                original_stdout = sys.stdout
-                sys.stdout = open('/dev/null', 'w')  # Redirect to /dev/null (Unix-like)
-                
-            try:
-                # Try to start the server on the main port
-                self.app.run(
+            self.server_thread = threading.Thread(
+                target=lambda: self.app.run(
                     host=config.HOST, 
-                    port=self.port, 
+                    port=config.PORT, 
                     debug=config.DEBUG, 
-                    use_reloader=False,  # Don't use reloader in thread
-                    threaded=True  # Enable threaded mode for better handling
+                    use_reloader=config.USE_RELOADER
                 )
-            except OSError as e:
-                # If the port is already in use, try the backup port
-                if "Address already in use" in str(e):
-                    print(f"Port {self.port} is already in use. Trying backup port {config.BACKUP_PORT}...")
-                    self.port = config.BACKUP_PORT
-                    self.app.run(
-                        host=config.HOST, 
-                        port=self.port, 
-                        debug=config.DEBUG, 
-                        use_reloader=False,
-                        threaded=True
-                    )
-                else:
-                    # Re-raise the exception if it's not an "Address already in use" error
-                    raise
-                
-        except Exception as e:
-            print(f"Error in _run_server: {str(e)}")
-            import traceback
-            traceback.print_exc()
+            )
+            self.server_thread.daemon = True
+            self.server_thread.start()
+            
+            # Only print the message - don't print Flask internal logs
+            print(f"Web server started at http://{config.HOST}:{config.PORT}")
+            return self.server_thread
+            
         finally:
             # Restore stdout if we redirected it
-            if hasattr(config, 'FLASK_QUIET') and config.FLASK_QUIET:
+            if config.FLASK_QUIET:
                 sys.stdout.close()
                 sys.stdout = original_stdout 

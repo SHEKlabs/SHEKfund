@@ -15,6 +15,8 @@ HOST = '0.0.0.0'
 PORT = 5000
 DEBUG = False
 USE_RELOADER = False
+PORT_REUSE = True  # Allow reusing the port if it's in TIME_WAIT state
+BACKUP_PORT = 5001  # Alternative port to use if main port is busy
 FLASK_QUIET = True  # Set to True to suppress Flask logs
 FLASK_LOG_LEVEL = 'ERROR'  # Set to 'ERROR' to only show errors, 'INFO' for more details
 
