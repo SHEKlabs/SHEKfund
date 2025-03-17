@@ -145,6 +145,11 @@ class ChartManager:
             # Add to basic buy trades for chart
             self.buy_trades.append([timestamp, price])
             
+            # Calculate fund value (value of all coins at current price)
+            fund_value = 0
+            for position in self.open_positions:
+                fund_value += position["amount"] * price
+            
             # Create detailed trade entry
             threshold_info = "Buy threshold triggered" if threshold_triggered else ""
             description = f"Bought {quantity} {self.current_symbol[:-4]} at ${price:.2f}. {threshold_info}"
@@ -158,6 +163,7 @@ class ChartManager:
                 "description": description,
                 "profit": self.cumulative_profit,  # Record current cumulative profit (not changing on buy)
                 "net_invested": self.net_invested,
+                "fund_value": fund_value,  # Add fund value
                 "coin": self.current_symbol[:-4]  # Store coin symbol without USDT suffix
             }
             
@@ -204,6 +210,11 @@ class ChartManager:
             # Add to basic sell trades for chart
             self.sell_trades.append([timestamp, price])
             
+            # Calculate fund value (value of all coins at current price)
+            fund_value = 0
+            for position in self.open_positions:
+                fund_value += position["amount"] * price
+            
             # Create detailed trade entry
             threshold_info = "Sell threshold triggered" if threshold_triggered else ""
             description = f"Sold {quantity} {self.current_symbol[:-4]} at ${price:.2f}. {threshold_info}"
@@ -221,6 +232,7 @@ class ChartManager:
                 "profit": self.cumulative_profit,  # Store updated cumulative profit
                 "individual_trade_profit": individual_trade_profit,  # Store individual trade profit for reference
                 "net_invested": self.net_invested,
+                "fund_value": fund_value,  # Add fund value
                 "coin": self.current_symbol[:-4]  # Store coin symbol without USDT suffix
             }
             

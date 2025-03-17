@@ -575,7 +575,8 @@
                         <th>Coin</th>
                         <th>Price ($)</th>
                         <th>Amount</th>
-                        <th>Value ($)</th>
+                        <th>Trade Value ($)</th>
+                        <th>Fund Value ($)</th>
                         <th>Cumulative Profit ($)</th>
                         <th>Cumulative Profit (%)</th>
                         <th>Net Invested ($)</th>
@@ -583,7 +584,7 @@
                     </tr>
                 </thead>
                 <tbody id="trade-log-body">
-                    <tr><td colspan="10">No trades executed yet</td></tr>
+                    <tr><td colspan="11">No trades executed yet</td></tr>
                 </tbody>
             </table>
         </div>
@@ -1456,6 +1457,7 @@
                     <td>$${price.toFixed(2)}</td>
                     <td>${amount.toFixed(8)}</td>
                     <td>$${dollarAmount.toFixed(2)}</td>
+                    <td>$${trade.fund_value ? trade.fund_value.toFixed(2) : netInvested.toFixed(2)}</td>
                     <td>$${profit.toFixed(2)}</td>
                     <td>${profitPercentage.toFixed(2)}%</td>
                     <td>$${netInvested.toFixed(2)}</td>
@@ -1859,6 +1861,7 @@
                 <td>$${currentPriceValue.toFixed(2)}</td>
                 <td>Calculating...</td>
                 <td>$${buyAmount.toFixed(2)}</td>
+                <td>Calculating...</td>
                 <td colspan="4">Trade in progress...</td>
             `;
             
@@ -1918,6 +1921,7 @@
                             <td>$${currentPriceValue.toFixed(2)}</td>
                             <td>N/A</td>
                             <td>$${buyAmount.toFixed(2)}</td>
+                            <td>N/A</td>
                             <td colspan="4">${data.message}</td>
                         `;
                         provisionalRow.style.opacity = '0.6';
@@ -1951,6 +1955,7 @@
                         <td>$${currentPriceValue.toFixed(2)}</td>
                         <td>N/A</td>
                         <td>$${buyAmount.toFixed(2)}</td>
+                        <td>N/A</td>
                         <td colspan="4">Network Error</td>
                     `;
                     provisionalRow.style.opacity = '0.6';
@@ -2016,6 +2021,7 @@
                 <td>$${currentPriceValue.toFixed(2)}</td>
                 <td>Calculating...</td>
                 <td>$${sellAmount.toFixed(2)}</td>
+                <td>Calculating...</td>
                 <td colspan="4">Trade in progress...</td>
             `;
             
@@ -2075,6 +2081,7 @@
                             <td>$${currentPriceValue.toFixed(2)}</td>
                             <td>N/A</td>
                             <td>$${sellAmount.toFixed(2)}</td>
+                            <td>N/A</td>
                             <td colspan="4">${data.message}</td>
                         `;
                         provisionalRow.style.opacity = '0.6';
@@ -2108,6 +2115,7 @@
                         <td>$${currentPriceValue.toFixed(2)}</td>
                         <td>N/A</td>
                         <td>$${sellAmount.toFixed(2)}</td>
+                        <td>N/A</td>
                         <td colspan="4">Network Error</td>
                     `;
                     provisionalRow.style.opacity = '0.6';
