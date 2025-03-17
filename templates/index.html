@@ -503,16 +503,24 @@
         <div class="immediate-trade-container">
             <div class="trade-control">
                 <div class="form-group">
-                    <label for="buy-now-amount">Buy Amount (USD):</label>
-                    <input type="number" id="buy-now-amount" class="form-control" value="100" min="1" step="1">
+                    <label for="buyAmountUSD">Buy Amount (USD)</label>
+                    <input type="number" class="form-control" id="buyAmountUSD" placeholder="USD" step="0.01" min="0" onchange="updateBuyAmountCoin()">
+                </div>
+                <div class="form-group">
+                    <label for="buyAmountCoin">Buy Amount (Coin)</label>
+                    <input type="number" class="form-control" id="buyAmountCoin" placeholder="Coin" step="0.0001" min="0" onchange="updateBuyAmountUSD()">
                 </div>
                 <button id="buy-now-btn" class="btn btn-success">Buy Now</button>
             </div>
             
             <div class="trade-control">
                 <div class="form-group">
-                    <label for="sell-now-amount">Sell Amount (USD):</label>
-                    <input type="number" id="sell-now-amount" class="form-control" value="100" min="1" step="1">
+                    <label for="sellAmountUSD">Sell Amount (USD)</label>
+                    <input type="number" class="form-control" id="sellAmountUSD" placeholder="USD" step="0.01" min="0" onchange="updateSellAmountCoin()">
+                </div>
+                <div class="form-group">
+                    <label for="sellAmountCoin">Sell Amount (Coin)</label>
+                    <input type="number" class="form-control" id="sellAmountCoin" placeholder="Coin" step="0.0001" min="0" onchange="updateSellAmountUSD()">
                 </div>
                 <button id="sell-now-btn" class="btn btn-danger">Sell Now</button>
             </div>
@@ -1818,13 +1826,70 @@
             }, 5000);
         }
 
+        // Functions to update Buy/Sell amounts between USD and Coin
+        function updateBuyAmountCoin() {
+            const usdAmount = parseFloat(document.getElementById('buyAmountUSD').value);
+            const priceValue = parseFloat(document.getElementById('current-price').textContent.replace('$', ''));
+            
+            if (!isNaN(usdAmount) && usdAmount > 0 && !isNaN(priceValue) && priceValue > 0) {
+                const coinAmount = usdAmount / priceValue;
+                document.getElementById('buyAmountCoin').value = coinAmount.toFixed(8);
+            } else {
+                document.getElementById('buyAmountCoin').value = '';
+            }
+        }
+        
+        function updateBuyAmountUSD() {
+            const coinAmount = parseFloat(document.getElementById('buyAmountCoin').value);
+            const priceValue = parseFloat(document.getElementById('current-price').textContent.replace('$', ''));
+            
+            if (!isNaN(coinAmount) && coinAmount > 0 && !isNaN(priceValue) && priceValue > 0) {
+                const usdAmount = coinAmount * priceValue;
+                document.getElementById('buyAmountUSD').value = usdAmount.toFixed(2);
+            } else {
+                document.getElementById('buyAmountUSD').value = '';
+            }
+        }
+        
+        function updateSellAmountCoin() {
+            const usdAmount = parseFloat(document.getElementById('sellAmountUSD').value);
+            const priceValue = parseFloat(document.getElementById('current-price').textContent.replace('$', ''));
+            
+            if (!isNaN(usdAmount) && usdAmount > 0 && !isNaN(priceValue) && priceValue > 0) {
+                const coinAmount = usdAmount / priceValue;
+                document.getElementById('sellAmountCoin').value = coinAmount.toFixed(8);
+            } else {
+                document.getElementById('sellAmountCoin').value = '';
+            }
+        }
+        
+        function updateSellAmountUSD() {
+            const coinAmount = parseFloat(document.getElementById('sellAmountCoin').value);
+            const priceValue = parseFloat(document.getElementById('current-price').textContent.replace('$', ''));
+            
+            if (!isNaN(coinAmount) && coinAmount > 0 && !isNaN(priceValue) && priceValue > 0) {
+                const usdAmount = coinAmount * priceValue;
+                document.getElementById('sellAmountUSD').value = usdAmount.toFixed(2);
+            } else {
+                document.getElementById('sellAmountUSD').value = '';
+            }
+        }
+
         // Add this after the other script functions but before the document ready section
         function executeImmediateBuy() {
-            const buyAmount = parseFloat(document.getElementById('buy-now-amount').value);
-            if (isNaN(buyAmount) || buyAmount <= 0) {
+            const buyAmountUSD = parseFloat(document.getElementById('buyAmountUSD').value);
+            const buyAmountCoin = parseFloat(document.getElementById('buyAmountCoin').value);
+            
+            // Check if at least one of the amounts is valid
+            if ((isNaN(buyAmountUSD) || buyAmountUSD <= 0) && (isNaN(buyAmountCoin) || buyAmountCoin <= 0)) {
                 showAlert('Please enter a valid buy amount greater than 0', 'danger');
                 return;
             }
+            
+            // Determine which amount to use (prefer USD if both are specified)
+            const useUSD = !isNaN(buyAmountUSD) && buyAmountUSD > 0;
+            const buyAmount = useUSD ? buyAmountUSD : buyAmountCoin;
+            const amountType = useUSD ? 'usd' : 'coin';
             
             const selectedCoin = document.getElementById('coin-select').value;
             if (!selectedCoin) {
@@ -1841,7 +1906,11 @@
             
             // OPTIMISTIC UI UPDATES - Show notification immediately
             const tradeNotification = document.getElementById('trade-notification');
-            tradeNotification.textContent = `BUY ORDER EXECUTING: $${buyAmount.toFixed(2)} at market price`;
+            if (useUSD) {
+                tradeNotification.textContent = `BUY ORDER EXECUTING: $${buyAmount.toFixed(2)} at market price`;
+            } else {
+                tradeNotification.textContent = `BUY ORDER EXECUTING: ${buyAmount.toFixed(8)} ${selectedCoin} at market price`;
+            }
             tradeNotification.className = 'trade-notification buy show';
             
             // OPTIMISTIC UI UPDATE - Add provisional entry to trade table
@@ -1860,7 +1929,7 @@
                 <td>${selectedCoin}</td>
                 <td>$${currentPriceValue.toFixed(2)}</td>
                 <td>Calculating...</td>
-                <td>$${buyAmount.toFixed(2)}</td>
+                <td>$${useUSD ? buyAmount.toFixed(2) : (buyAmount * currentPriceValue).toFixed(2)}</td>
                 <td>Calculating...</td>
                 <td colspan="4">Trade in progress...</td>
             `;
@@ -1882,7 +1951,8 @@
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    amount: buyAmount
+                    amount: buyAmount,
+                    amount_type: amountType
                 })
             })
             .then(response => response.json())
@@ -1920,7 +1990,7 @@
                             <td>${selectedCoin}</td>
                             <td>$${currentPriceValue.toFixed(2)}</td>
                             <td>N/A</td>
-                            <td>$${buyAmount.toFixed(2)}</td>
+                            <td>$${useUSD ? buyAmount.toFixed(2) : (buyAmount * currentPriceValue).toFixed(2)}</td>
                             <td>N/A</td>
                             <td colspan="4">${data.message}</td>
                         `;
@@ -1954,7 +2024,7 @@
                         <td>${selectedCoin}</td>
                         <td>$${currentPriceValue.toFixed(2)}</td>
                         <td>N/A</td>
-                        <td>$${buyAmount.toFixed(2)}</td>
+                        <td>$${useUSD ? buyAmount.toFixed(2) : (buyAmount * currentPriceValue).toFixed(2)}</td>
                         <td>N/A</td>
                         <td colspan="4">Network Error</td>
                     `;
@@ -1980,11 +2050,19 @@
         }
 
         function executeImmediateSell() {
-            const sellAmount = parseFloat(document.getElementById('sell-now-amount').value);
-            if (isNaN(sellAmount) || sellAmount <= 0) {
+            const sellAmountUSD = parseFloat(document.getElementById('sellAmountUSD').value);
+            const sellAmountCoin = parseFloat(document.getElementById('sellAmountCoin').value);
+            
+            // Check if at least one of the amounts is valid
+            if ((isNaN(sellAmountUSD) || sellAmountUSD <= 0) && (isNaN(sellAmountCoin) || sellAmountCoin <= 0)) {
                 showAlert('Please enter a valid sell amount greater than 0', 'danger');
                 return;
             }
+            
+            // Determine which amount to use (prefer USD if both are specified)
+            const useUSD = !isNaN(sellAmountUSD) && sellAmountUSD > 0;
+            const sellAmount = useUSD ? sellAmountUSD : sellAmountCoin;
+            const amountType = useUSD ? 'usd' : 'coin';
             
             const selectedCoin = document.getElementById('coin-select').value;
             if (!selectedCoin) {
@@ -2001,7 +2079,11 @@
             
             // OPTIMISTIC UI UPDATES - Show notification immediately
             const tradeNotification = document.getElementById('trade-notification');
-            tradeNotification.textContent = `SELL ORDER EXECUTING: $${sellAmount.toFixed(2)} at market price`;
+            if (useUSD) {
+                tradeNotification.textContent = `SELL ORDER EXECUTING: $${sellAmount.toFixed(2)} at market price`;
+            } else {
+                tradeNotification.textContent = `SELL ORDER EXECUTING: ${sellAmount.toFixed(8)} ${selectedCoin} at market price`;
+            }
             tradeNotification.className = 'trade-notification sell show';
             
             // OPTIMISTIC UI UPDATE - Add provisional entry to trade table
@@ -2020,7 +2102,7 @@
                 <td>${selectedCoin}</td>
                 <td>$${currentPriceValue.toFixed(2)}</td>
                 <td>Calculating...</td>
-                <td>$${sellAmount.toFixed(2)}</td>
+                <td>$${useUSD ? sellAmount.toFixed(2) : (sellAmount * currentPriceValue).toFixed(2)}</td>
                 <td>Calculating...</td>
                 <td colspan="4">Trade in progress...</td>
             `;
@@ -2042,7 +2124,8 @@
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    amount: sellAmount
+                    amount: sellAmount,
+                    amount_type: amountType
                 })
             })
             .then(response => response.json())
@@ -2080,7 +2163,7 @@
                             <td>${selectedCoin}</td>
                             <td>$${currentPriceValue.toFixed(2)}</td>
                             <td>N/A</td>
-                            <td>$${sellAmount.toFixed(2)}</td>
+                            <td>$${useUSD ? sellAmount.toFixed(2) : (sellAmount * currentPriceValue).toFixed(2)}</td>
                             <td>N/A</td>
                             <td colspan="4">${data.message}</td>
                         `;
@@ -2114,7 +2197,7 @@
                         <td>${selectedCoin}</td>
                         <td>$${currentPriceValue.toFixed(2)}</td>
                         <td>N/A</td>
-                        <td>$${sellAmount.toFixed(2)}</td>
+                        <td>$${useUSD ? sellAmount.toFixed(2) : (sellAmount * currentPriceValue).toFixed(2)}</td>
                         <td>N/A</td>
                         <td colspan="4">Network Error</td>
                     `;

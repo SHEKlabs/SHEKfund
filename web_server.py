@@ -492,44 +492,49 @@ class WebServer:
         @self.app.route('/execute_buy', methods=['POST'])
         def execute_buy():
             """
-            Execute an immediate buy trade at the current market price.
-            Works independently of the trading algorithm and doesn't require trading to be started.
+            Execute a buy order from the web interface.
+            
+            POST parameters:
+                amount: The amount to buy (either in USD or in coin units)
+                amount_type: 'usd' or 'coin' to specify what the amount represents
+            
+            Returns:
+                JSON response with order status
             """
             try:
                 data = request.json
-                usd_amount = float(data.get('amount', 100))  # Default to $100 if not specified
+                amount = float(data.get('amount', 0))
+                amount_type = data.get('amount_type', 'usd')  # Default to USD
                 
-                # Validate the coin is selected
-                if not data_fetcher or not data_fetcher.current_symbol:
+                if amount <= 0:
                     return jsonify({
                         "status": "error",
-                        "message": "No coin selected. Please select a coin first."
+                        "message": f"Invalid amount: {amount}"
                     })
                 
-                # Get current price
-                current_price = data_fetcher.get_current_price(data_fetcher.current_symbol, force_fresh=True)
-                if current_price is None:
+                # Get latest price
+                current_price = self.data_fetcher.get_current_price()
+                if not current_price:
                     return jsonify({
                         "status": "error",
-                        "message": "Could not fetch current price. Please try again."
+                        "message": "Could not get current price"
                     })
                 
-                # Calculate quantity based on USD amount
-                coin_quantity = usd_amount / current_price
+                # Calculate quantity based on amount type
+                if amount_type == 'usd':
+                    usd_amount = amount
+                    coin_quantity = usd_amount / current_price
+                else:  # amount_type == 'coin'
+                    coin_quantity = amount
+                    usd_amount = amount * current_price
                 
-                print(f"\n=== EXECUTING IMMEDIATE BUY ORDER ===")
-                print(f"Coin: {data_fetcher.current_symbol}")
-                print(f"USD Amount: ${usd_amount}")
-                print(f"Current Price: ${current_price}")
-                print(f"Quantity: {coin_quantity}")
-                
-                # Execute the buy order
-                order = data_fetcher.place_buy_order(data_fetcher.current_symbol, coin_quantity)
+                # Place the buy order
+                order = self.data_fetcher.place_buy_order(self.data_fetcher.current_symbol, coin_quantity)
                 
                 if order and order.get("status") == "filled":
                     # Update trading bot's position status if it's tracking this coin
                     # Only check if symbols match, don't require the bot to be running
-                    if hasattr(trading_bot, 'data_fetcher') and trading_bot.data_fetcher and trading_bot.data_fetcher.current_symbol == data_fetcher.current_symbol:
+                    if hasattr(trading_bot, 'data_fetcher') and trading_bot.data_fetcher and trading_bot.data_fetcher.current_symbol == self.data_fetcher.current_symbol:
                         # Thread-safe update of trading bot state
                         with trading_bot.state_lock:
                             trading_bot.in_position = True
@@ -541,7 +546,7 @@ class WebServer:
                     
                     return jsonify({
                         "status": "success",
-                        "message": f"Buy order executed successfully: {coin_quantity:.8f} {data_fetcher.current_symbol} at ${current_price:.2f}",
+                        "message": f"Buy order executed successfully: {coin_quantity:.8f} {self.data_fetcher.current_symbol} at ${current_price:.2f}",
                         "price": current_price,
                         "quantity": coin_quantity,
                         "usd_amount": usd_amount,
@@ -562,44 +567,49 @@ class WebServer:
         @self.app.route('/execute_sell', methods=['POST'])
         def execute_sell():
             """
-            Execute an immediate sell trade at the current market price.
-            Works independently of the trading algorithm and doesn't require trading to be started.
+            Execute a sell order from the web interface.
+            
+            POST parameters:
+                amount: The amount to sell (either in USD or in coin units)
+                amount_type: 'usd' or 'coin' to specify what the amount represents
+            
+            Returns:
+                JSON response with order status
             """
             try:
                 data = request.json
-                usd_amount = float(data.get('amount', 100))  # Default to $100 if not specified
+                amount = float(data.get('amount', 0))
+                amount_type = data.get('amount_type', 'usd')  # Default to USD
                 
-                # Validate the coin is selected
-                if not data_fetcher or not data_fetcher.current_symbol:
+                if amount <= 0:
                     return jsonify({
                         "status": "error",
-                        "message": "No coin selected. Please select a coin first."
+                        "message": f"Invalid amount: {amount}"
                     })
                 
-                # Get current price
-                current_price = data_fetcher.get_current_price(data_fetcher.current_symbol, force_fresh=True)
-                if current_price is None:
+                # Get latest price
+                current_price = self.data_fetcher.get_current_price()
+                if not current_price:
                     return jsonify({
                         "status": "error",
-                        "message": "Could not fetch current price. Please try again."
+                        "message": "Could not get current price"
                     })
                 
-                # Calculate quantity based on USD amount
-                coin_quantity = usd_amount / current_price
+                # Calculate quantity based on amount type
+                if amount_type == 'usd':
+                    usd_amount = amount
+                    coin_quantity = usd_amount / current_price
+                else:  # amount_type == 'coin'
+                    coin_quantity = amount
+                    usd_amount = amount * current_price
                 
-                print(f"\n=== EXECUTING IMMEDIATE SELL ORDER ===")
-                print(f"Coin: {data_fetcher.current_symbol}")
-                print(f"USD Amount: ${usd_amount}")
-                print(f"Current Price: ${current_price}")
-                print(f"Quantity: {coin_quantity}")
-                
-                # Execute the sell order
-                order = data_fetcher.place_sell_order(data_fetcher.current_symbol, coin_quantity)
+                # Place the sell order
+                order = self.data_fetcher.place_sell_order(self.data_fetcher.current_symbol, coin_quantity)
                 
                 if order and order.get("status") == "filled":
                     # Update trading bot's position status if it's tracking this coin
                     # Only check if symbols match, don't require the bot to be running
-                    if hasattr(trading_bot, 'data_fetcher') and trading_bot.data_fetcher and trading_bot.data_fetcher.current_symbol == data_fetcher.current_symbol:
+                    if hasattr(trading_bot, 'data_fetcher') and trading_bot.data_fetcher and trading_bot.data_fetcher.current_symbol == self.data_fetcher.current_symbol:
                         # Thread-safe update of trading bot state
                         with trading_bot.state_lock:
                             trading_bot.in_position = False
@@ -611,7 +621,7 @@ class WebServer:
                     
                     return jsonify({
                         "status": "success",
-                        "message": f"Sell order executed successfully: {coin_quantity:.8f} {data_fetcher.current_symbol} at ${current_price:.2f}",
+                        "message": f"Sell order executed successfully: {coin_quantity:.8f} {self.data_fetcher.current_symbol} at ${current_price:.2f}",
                         "price": current_price,
                         "quantity": coin_quantity,
                         "usd_amount": usd_amount,
